@@ -1769,6 +1769,47 @@
 
 <!-- ======================== MODALS ======================== -->
 
+<!-- MODAL BIENVENIDA / SETUP INICIAL -->
+<div class="modal-overlay" id="modalBienvenida" style="z-index:8000;">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title" style="flex-direction:column;align-items:flex-start;gap:6px;">
+      <span style="font-size:32px;">👋</span>
+      <span>¡Bienvenido a FinControl!</span>
+      <p style="font-size:13px;color:var(--text2);font-weight:400;margin-top:4px;line-height:1.6;">
+        Es tu primera vez. Configurá los datos básicos para empezar. Podés cambiarlo después desde <strong>Ingresos fijos</strong>.
+      </p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">💼 Tu sueldo mensual principal (opcional)</label>
+      <input class="form-input" type="number" id="setup_sueldo" placeholder="Ej: 500000" min="0" />
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono);">Podés dejarlo en 0 y cargarlo luego en "Ingresos fijos"</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">📅 ¿Qué día del mes cobras?</label>
+      <input class="form-input" type="number" id="setup_dia" placeholder="Ej: 5" min="1" max="31" value="1" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">🔑 PIN de acceso</label>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-family:var(--mono);">
+        Tu PIN ya está configurado. Si querés cambiarlo podés hacerlo desde Configuración.
+      </div>
+    </div>
+
+    <div style="background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--accent);font-family:var(--mono);font-weight:700;margin-bottom:4px;">✅ Google Sheets conectado</div>
+      <div style="font-size:12px;color:var(--text2);">Tus datos se guardarán automáticamente en tu hoja de cálculo.</div>
+    </div>
+
+    <div class="form-actions" style="padding-top:0;border-top:none;">
+      <button class="btn btn-ghost" onclick="closeModal('modalBienvenida')">Saltar por ahora</button>
+      <button class="btn btn-primary" onclick="guardarSetupInicial()">✓ Guardar y comenzar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PRÉSTAMO -->
 <div class="modal-overlay" id="modalPrestamo">
   <div class="modal">
@@ -2521,7 +2562,6 @@ function sheetRequest(params) {
 }
 
 async function readTabla(tabla) {
-  showLoader('Cargando ' + tabla + '...');
   try {
     const res = await sheetRequest({ action: 'read', tabla });
     if (res.ok) {
@@ -2529,8 +2569,8 @@ async function readTabla(tabla) {
       saveCache();
     }
     return DB[tabla] || [];
-  } finally {
-    hideLoader();
+  } catch(e) {
+    return DB[tabla] || [];
   }
 }
 
@@ -2619,6 +2659,11 @@ async function syncAll() {
     populatePersonaSelects();
     loadPageData(currentPage);
     toast('Sincronizado ✓', 'success');
+
+    // Primer ingreso: mostrar wizard de bienvenida si no hay config
+    if (!configRow) {
+      setTimeout(() => openModal('modalBienvenida'), 600);
+    }
   } catch(e) {
     updateStatusUI(false);
     if (Object.values(DB).some(v => Array.isArray(v) && v.length > 0)) {
@@ -2628,11 +2673,12 @@ async function syncAll() {
     }
     loadPageData(currentPage);
   } finally {
-    hideLoader();
+    // Forzar reset del loader para evitar que quede colgado
+    _loaderCount = 0;
+    const el = document.getElementById('globalLoader');
+    if (el) el.classList.remove('visible');
   }
-}
-
-function showCorsWarning() {
+} {
   // Mostrar banner solo si no existe ya
   if (document.getElementById('corsWarning')) return;
   const banner = document.createElement('div');
@@ -2679,6 +2725,24 @@ async function testConnection() {
 
 async function guardarConfigFinal() {
   toast('La URL está hardcodeada en producción', 'warning');
+}
+
+async function guardarSetupInicial() {
+  const sueldo = parseFloat(document.getElementById('setup_sueldo')?.value) || 0;
+  const dia    = parseInt(document.getElementById('setup_dia')?.value) || 1;
+
+  CONFIG.sueldo    = sueldo;
+  CONFIG.sueldoDia = dia;
+
+  try {
+    await writeRow('config', 'main', { id: 'main', sueldo, sueldoDia: dia });
+    toast('¡Configuración guardada! ✓', 'success');
+  } catch(e) {
+    toast('Guardado localmente (sin conexión)', 'warning');
+  }
+
+  closeModal('modalBienvenida');
+  refreshDashboard();
 }
 
 // ============================================================
