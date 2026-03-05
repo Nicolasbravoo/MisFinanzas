@@ -1,0 +1,3629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>FinControl — Panel de Finanzas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a25;
+    --border: #2a2a3a;
+    --accent: #00e5a0;
+    --accent2: #ff6b6b;
+    --accent3: #ffd93d;
+    --accent4: #6bcbff;
+    --text: #f0f0f5;
+    --text2: #8888a0;
+    --text3: #555570;
+    --danger: #ff4757;
+    --warning: #ffa502;
+    --success: #00e5a0;
+    --purple: #a855f7;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* LAYOUT */
+  .app { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    padding: 0;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo h1 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .sidebar-logo span {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px 0;
+    overflow-y: auto;
+  }
+
+  .nav-group-label {
+    font-size: 9px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 12px 20px 6px;
+    font-family: var(--mono);
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    border-left: 2px solid transparent;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+
+  .nav-item.active {
+    color: var(--accent);
+    background: rgba(0,229,160,0.07);
+    border-left-color: var(--accent);
+  }
+
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  /* MAIN */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title { font-size: 18px; font-weight: 700; }
+  .topbar-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* CONTENT */
+  .content { padding: 32px; flex: 1; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS GRID */
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .card-accent-green { border-left: 3px solid var(--accent); }
+  .card-accent-red { border-left: 3px solid var(--accent2); }
+  .card-accent-yellow { border-left: 3px solid var(--accent3); }
+  .card-accent-blue { border-left: 3px solid var(--accent4); }
+  .card-accent-purple { border-left: 3px solid var(--purple); }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    font-family: var(--mono);
+    letter-spacing: -1px;
+  }
+
+  .stat-value.green { color: var(--accent); }
+  .stat-value.red { color: var(--accent2); }
+  .stat-value.yellow { color: var(--accent3); }
+  .stat-value.blue { color: var(--accent4); }
+
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text2);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: var(--sans);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #00c885; transform: translateY(-1px); }
+
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-danger:hover { background: #e03050; }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text3); }
+
+  .btn-sm { padding: 5px 10px; font-size: 10px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-green { background: rgba(0,229,160,0.12); color: var(--accent); }
+  .badge-red { background: rgba(255,107,107,0.12); color: var(--accent2); }
+  .badge-yellow { background: rgba(255,217,61,0.12); color: var(--accent3); }
+  .badge-blue { background: rgba(107,203,255,0.12); color: var(--accent4); }
+  .badge-purple { background: rgba(168,85,247,0.12); color: var(--purple); }
+  .badge-gray { background: var(--surface2); color: var(--text2); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-weight: 400;
+  }
+
+  td {
+    padding: 12px 12px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .td-mono { font-family: var(--mono); }
+  .td-bold { font-weight: 700; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .modal-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* FORMS */
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .form-select option { background: var(--surface2); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-green { background: var(--accent); }
+  .progress-red { background: var(--accent2); }
+  .progress-yellow { background: var(--accent3); }
+
+  /* ALERT */
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .alert-warning { background: rgba(255,165,2,0.1); border: 1px solid rgba(255,165,2,0.3); color: var(--warning); }
+  .alert-danger { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); color: var(--danger); }
+  .alert-success { background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.3); color: var(--accent); }
+  .alert-info { background: rgba(107,203,255,0.1); border: 1px solid rgba(107,203,255,0.3); color: var(--accent4); }
+
+  /* TOAST */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideInRight 0.3s ease;
+    min-width: 240px;
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .toast-success { background: var(--accent); color: #000; }
+  .toast-error { background: var(--danger); color: #fff; }
+  .toast-warning { background: var(--warning); color: #000; }
+
+  /* CONFIG SCREEN */
+  .config-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    padding: 40px;
+  }
+
+  .config-screen h2 {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .config-screen p {
+    color: var(--text2);
+    text-align: center;
+    max-width: 500px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .config-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  /* PRIORITY TIMELINE */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+
+  .timeline-item {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    position: relative;
+  }
+
+  .timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 40px;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .timeline-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .dot-urgent { background: rgba(255,71,87,0.2); color: var(--danger); border: 2px solid var(--danger); }
+  .dot-soon { background: rgba(255,165,2,0.2); color: var(--warning); border: 2px solid var(--warning); }
+  .dot-ok { background: rgba(0,229,160,0.1); color: var(--accent); border: 2px solid var(--accent); }
+
+  .timeline-content { flex: 1; }
+  .timeline-name { font-weight: 700; font-size: 14px; }
+  .timeline-detail { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+
+  .timeline-amount {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--accent3);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ADVISOR */
+  .advisor-card {
+    background: linear-gradient(135deg, rgba(0,229,160,0.05), rgba(107,203,255,0.05));
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .advisor-icon { font-size: 24px; margin-bottom: 8px; }
+  .advisor-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .advisor-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* CHIP/TAG */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  /* LOADING */
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text3);
+    font-size: 13px;
+    font-family: var(--mono);
+    padding: 40px;
+    justify-content: center;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 60px 40px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-text { font-size: 13px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ============================================================
+     MOBILE RESPONSIVE — COMPLETO
+  ============================================================ */
+  @media (max-width: 600px) {
+
+    /* SIDEBAR — oculto, reemplazado por bottom nav */
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding-bottom: 70px; }
+
+    /* GRIDS */
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+
+    /* CONTENT */
+    .content { padding: 12px; }
+
+    /* TOPBAR */
+    .topbar {
+      padding: 10px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-title { font-size: 15px; }
+    .topbar-sub { display: none; }
+    .topbar-actions .sheet-status span { display: none; }
+
+    /* PAGE HEADER */
+    .page-header {
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .page-header h2 { font-size: 18px; }
+    .page-header > div:last-child {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* CARDS */
+    .card { padding: 14px; }
+
+    /* STAT VALUES */
+    .stat-value { font-size: 20px; }
+    .big-number { font-size: 28px; }
+
+    /* UBER HERO CARD — números grandes */
+    #uberMetaCard .card > div:first-child > div:nth-child(2) {
+      font-size: 36px !important;
+      letter-spacing: -2px !important;
+    }
+
+    /* TABLAS — scroll horizontal suave */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: var(--radius-sm);
+    }
+    table { font-size: 11px; min-width: 480px; }
+    th { padding: 8px; font-size: 8px; }
+    td { padding: 8px; }
+
+    /* MODALES — full screen en mobile */
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal {
+      max-width: 100% !important;
+      width: 100%;
+      border-radius: var(--radius) var(--radius) 0 0;
+      max-height: 92vh;
+      padding: 20px 16px;
+    }
+
+    /* FORMULARIOS */
+    .form-row, .form-row-3 { grid-template-columns: 1fr; }
+
+    /* TABS — scroll horizontal */
+    .tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 0;
+      flex-wrap: nowrap;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      white-space: nowrap;
+      padding: 10px 14px;
+      font-size: 11px;
+    }
+
+    /* SECTION TITLE */
+    .section-title { font-size: 11px; }
+
+    /* TIMELINE */
+    .timeline-item { gap: 10px; }
+    .timeline-amount { font-size: 13px; }
+
+    /* DEUDA CARDS */
+    .deuda-card { padding: 12px; }
+
+    /* BOTONES en page-header */
+    .btn { font-size: 11px; padding: 8px 12px; }
+    .btn-sm { font-size: 10px; padding: 5px 8px; }
+
+    /* PRIO CARDS stacked */
+    #page-prioridades .grid { grid-template-columns: 1fr; }
+
+    /* UBER STATS — 2 col en mobile */
+    #uberStats { grid-template-columns: 1fr 1fr !important; }
+
+    /* INGRESO STATS */
+    #ingresosStats { grid-template-columns: 1fr !important; }
+
+    /* TOAST más chico */
+    .toast-container { bottom: 80px; right: 12px; left: 12px; }
+    .toast { min-width: unset; font-size: 12px; }
+
+    /* ALERT */
+    .alert { font-size: 12px; }
+
+    /* ADVISOR CARDS */
+    .advisor-card { padding: 14px; }
+    .advisor-title { font-size: 13px; }
+    .advisor-text { font-size: 12px; }
+
+    /* BADGE */
+    .badge { font-size: 9px; }
+
+    /* DELETE BTN — siempre visible en mobile */
+    .delete-btn { opacity: 1 !important; }
+
+    /* UBER BARCHART — reducido */
+    #uberProgresoCard > div:nth-child(2) { height: 50px !important; }
+  }
+
+  /* ============================================================
+     BOTTOM NAV — solo mobile
+  ============================================================ */
+  .bottom-nav {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 62px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 200;
+      align-items: stretch;
+    }
+
+    .bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: var(--mono);
+      transition: color 0.15s, background 0.15s;
+      border: none;
+      background: none;
+      padding: 0 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-nav-item .bn-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .bottom-nav-item.active {
+      color: var(--accent);
+      background: rgba(0,229,160,0.06);
+    }
+
+    .bottom-nav-item:active {
+      background: rgba(255,255,255,0.04);
+    }
+  }
+
+  /* ============================================================
+     HAMBURGER BUTTON — solo mobile
+  ============================================================ */
+  .hamburger-btn {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .hamburger-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+  }
+
+  /* ============================================================
+     DRAWER (sidebar en mobile — overlay lateral)
+  ============================================================ */
+  .sidebar-drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    backdrop-filter: blur(2px);
+  }
+
+  .sidebar-drawer-overlay.open { display: block; }
+
+  .sidebar-drawer {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    z-index: 301;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-drawer.open {
+    transform: translateX(0);
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    color: var(--text3);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CUOTA BADGE */
+  .cuota-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+
+  .cuota-dots {
+    display: flex;
+    gap: 3px;
+  }
+
+  .cuota-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .cuota-dot.paid { background: var(--accent); }
+  .cuota-dot.pending { background: var(--surface2); border: 1px solid var(--border); }
+
+  /* HEADER with decorative line */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .page-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .page-header p {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-top: 3px;
+  }
+
+  /* NUMERO GRANDE */
+  .big-number {
+    font-family: var(--mono);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -2px;
+  }
+
+  /* SEPARADOR */
+  .sep { height: 1px; background: var(--border); margin: 24px 0; }
+
+  /* INLINE EDIT HINT */
+  .hint { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+  /* SHEET STATUS */
+  .sheet-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text3);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .status-dot.green { background: var(--accent); }
+  .status-dot.red { background: var(--danger); }
+  .status-dot.yellow { background: var(--warning); animation: pulse 1s infinite; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* DEUDA CARD */
+  .deuda-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    transition: border-color 0.15s;
+  }
+  .deuda-card:hover { border-color: var(--text3); }
+
+  .deuda-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .deuda-nombre { font-weight: 700; font-size: 14px; }
+  .deuda-tipo { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+  .deuda-monto { font-family: var(--mono); font-weight: 700; font-size: 16px; }
+
+  /* INPUT SUELDO */
+  .sueldo-input-wrap { position: relative; }
+  .sueldo-prefix {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text3);
+  }
+  .sueldo-input { padding-left: 32px !important; }
+
+  /* CHECKBOX CUSTOM */
+  .checkbox-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .checkbox-wrap input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+  }
+
+  /* DELETE ROW HOVER */
+  .delete-btn {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  tr:hover .delete-btn { opacity: 1; }
+
+  /* NOTA CARD */
+  .nota-card {
+    background: rgba(255,217,61,0.05);
+    border: 1px solid rgba(255,217,61,0.2);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--accent3);
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- MAIN APP -->
+<div class="app" id="mainApp">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>FinControl</h1>
+      <span>Panel de finanzas</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Principal</div>
+      <div class="nav-item active" onclick="navigateTo('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="navigateTo('prioridades')">
+        <span class="icon">🎯</span> Prioridades
+      </div>
+
+      <div class="nav-group-label">Deudas</div>
+      <div class="nav-item" onclick="navigateTo('prestamos')">
+        <span class="icon">🏦</span> Préstamos
+      </div>
+      <div class="nav-item" onclick="navigateTo('tarjetas')">
+        <span class="icon">💳</span> Tarjetas
+      </div>
+      <div class="nav-item" onclick="navigateTo('deudores')">
+        <span class="icon">👥</span> Me deben
+      </div>
+
+      <div class="nav-group-label">Ingresos</div>
+      <div class="nav-item" onclick="navigateTo('sueldo')">
+        <span class="icon">💼</span> Ingresos fijos
+      </div>
+      <div class="nav-item" onclick="navigateTo('uber')">
+        <span class="icon">🚗</span> Uber / Auto
+      </div>
+
+      <div class="nav-group-label">Análisis</div>
+      <div class="nav-item" onclick="navigateTo('analisis')">
+        <span class="icon">🧠</span> Asesor IA
+      </div>
+
+      <div class="nav-group-label">Sistema</div>
+      <div class="nav-item" onclick="navigateTo('config')">
+        <span class="icon">⚙️</span> Configuración
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sheet-status">
+        <div class="status-dot" id="sidebarStatusDot"></div>
+        <span id="sidebarStatusText">Verificando...</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="hamburger-btn" onclick="openDrawer()" aria-label="Menú">☰</button>
+        <div>
+          <div class="topbar-title" id="topbarTitle">Dashboard</div>
+          <div class="topbar-sub" id="topbarSub">Resumen general de tus finanzas</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="sheet-status" id="topbarStatus">
+          <div class="status-dot yellow" id="topbarDot"></div>
+          <span id="topbarStatusText">Cargando...</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="syncAll()">↻ Sync</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ======================== DASHBOARD ======================== -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <h2>Resumen del mes</h2>
+            <p id="dashFecha">Cargando...</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="refreshDashboard()">↻ Actualizar</button>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom:24px;">
+          <div class="card card-accent-green">
+            <div class="stat-label">Ingresos totales</div>
+            <div class="stat-value green" id="dash-ingresos">$0</div>
+            <div class="stat-sub" id="dash-ingresos-sub">Sueldo + Uber</div>
+          </div>
+          <div class="card card-accent-red">
+            <div class="stat-label">Gastos totales</div>
+            <div class="stat-value red" id="dash-gastos">$0</div>
+            <div class="stat-sub" id="dash-gastos-sub">Deudas + fijos</div>
+          </div>
+          <div class="card card-accent-yellow">
+            <div class="stat-label">Balance mes</div>
+            <div class="stat-value" id="dash-balance" style="color:var(--text)">$0</div>
+            <div class="stat-sub" id="dash-balance-sub">Lo que sobra/falta</div>
+          </div>
+          <div class="card card-accent-blue">
+            <div class="stat-label">Meta diaria Uber</div>
+            <div class="stat-value blue" id="dash-meta-uber">$0</div>
+            <div class="stat-sub" id="dash-meta-sub">Para cubrir el faltante</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:24px;">
+          <div class="card">
+            <div class="section-title">Vencimientos próximos (7 días)</div>
+            <div id="dashVencimientos">
+              <div class="loading"><div class="spinner"></div> Cargando...</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Distribución de deuda</div>
+            <div id="dashDistribucion">
+              <div class="loading"><div class="spinner"></div> Cargando...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Resumen rápido — lo que me deben</div>
+          <div id="dashMeDeben">
+            <div class="loading"><div class="spinner"></div> Cargando...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== PRIORIDADES ======================== -->
+      <div class="page" id="page-prioridades">
+        <div class="page-header">
+          <div>
+            <h2>Plan de pagos</h2>
+            <p>Ordenado por urgencia de vencimiento</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div class="card card-accent-blue" style="padding:12px 16px;">
+              <div class="stat-label">Faltan juntar este mes</div>
+              <div class="stat-value blue" style="font-size:20px;" id="prio-faltante">$0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nota-card" style="margin-bottom:20px;">
+          📌 El orden está calculado según la fecha de vencimiento. Los pagos en rojo vencen en menos de 5 días.
+        </div>
+
+        <div class="card">
+          <div class="section-title">Cronograma de pagos del mes</div>
+          <div id="prioTimeline">
+            <div class="loading"><div class="spinner"></div> Calculando...</div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;" class="grid grid-2">
+          <div class="card">
+            <div class="section-title">Meta diaria Uber para cubrir todo</div>
+            <div style="text-align:center;padding:20px 0;">
+              <div class="big-number" id="prio-meta-uber" style="color:var(--accent);">$0</div>
+              <div class="stat-sub" style="margin-top:8px;" id="prio-dias-restantes">— días restantes</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-green" id="prio-progress-uber" style="width:0%"></div>
+            </div>
+            <div class="hint" style="margin-top:8px;" id="prio-uber-hint">—</div>
+          </div>
+          <div class="card">
+            <div class="section-title">Ingresos actuales vs necesarios</div>
+            <div id="prioIngresos">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== PRÉSTAMOS ======================== -->
+      <div class="page" id="page-prestamos">
+        <div class="page-header">
+          <div>
+            <h2>Préstamos</h2>
+            <p>Gestión de deudas bancarias y financieras</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modalPrestamo')">+ Nuevo préstamo</button>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('prestamos','todos')">Todos</div>
+          <div class="tab" onclick="switchTab('prestamos','mios')">100% Míos</div>
+          <div class="tab" onclick="switchTab('prestamos','compartidos')">Compartidos</div>
+          <div class="tab" onclick="switchTab('prestamos','ajenos')">De otros</div>
+        </div>
+
+        <div class="tab-content active" id="prestamos-tab-todos">
+          <div id="listaPrestamos">
+            <div class="loading"><div class="spinner"></div> Cargando...</div>
+          </div>
+        </div>
+        <div class="tab-content" id="prestamos-tab-mios"></div>
+        <div class="tab-content" id="prestamos-tab-compartidos"></div>
+        <div class="tab-content" id="prestamos-tab-ajenos"></div>
+      </div>
+
+      <!-- ======================== TARJETAS ======================== -->
+      <div class="page" id="page-tarjetas">
+        <div class="page-header">
+          <div>
+            <h2>Tarjetas de crédito</h2>
+            <p>Compras, cuotas y vencimientos</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" onclick="openModal('modalTarjetaNueva')">+ Tarjeta</button>
+            <button class="btn btn-primary" onclick="openModal('modalCompra')">+ Compra</button>
+          </div>
+        </div>
+
+        <div id="listaTarjetas" style="margin-bottom:24px;">
+          <div class="loading"><div class="spinner"></div> Cargando...</div>
+        </div>
+
+        <div class="section-title">Detalle de compras</div>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('tarjetas','todas')">Todas</div>
+          <div class="tab" onclick="switchTab('tarjetas','mias')">Mías</div>
+          <div class="tab" onclick="switchTab('tarjetas','compartidas')">Compartidas</div>
+          <div class="tab" onclick="switchTab('tarjetas','ajenas')">De otros</div>
+        </div>
+
+        <div class="tab-content active" id="tarjetas-tab-todas">
+          <div id="listaCompras">
+            <div class="loading"><div class="spinner"></div> Cargando...</div>
+          </div>
+        </div>
+        <div class="tab-content" id="tarjetas-tab-mias"></div>
+        <div class="tab-content" id="tarjetas-tab-compartidas"></div>
+        <div class="tab-content" id="tarjetas-tab-ajenas"></div>
+      </div>
+
+      <!-- ======================== DEUDORES ======================== -->
+      <div class="page" id="page-deudores">
+        <div class="page-header">
+          <div>
+            <h2>Me deben</h2>
+            <p>Personas que te deben plata (partes compartidas)</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="refreshDeudores()">↻ Recalcular</button>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom:24px;" id="deudoresStats">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Detalle por persona</div>
+          <div id="listaDeudores">
+            <div class="loading"><div class="spinner"></div> Cargando...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== SUELDO ======================== -->
+      <div class="page" id="page-sueldo">
+        <div class="page-header">
+          <div>
+            <h2>Ingresos fijos & Gastos del auto</h2>
+            <p>Podés tener uno o varios ingresos fijos mensuales</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modalIngresoFijo')">+ Ingreso fijo</button>
+        </div>
+
+        <!-- STATS INGRESOS -->
+        <div class="grid grid-3" style="margin-bottom:24px;" id="ingresosStats">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+
+        <!-- LISTA INGRESOS FIJOS -->
+        <div class="grid grid-2" style="margin-bottom:24px;">
+          <div class="card card-accent-green">
+            <div class="section-title">Ingresos fijos mensuales</div>
+            <div id="listaIngresosFijos">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <div class="card card-accent-yellow">
+            <div class="section-title">Gastos fijos del auto</div>
+            <div id="listaGastosFijos">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+            <button class="btn btn-ghost" onclick="openModal('modalGastoFijo')" style="width:100%;justify-content:center;margin-top:12px;">+ Agregar gasto fijo</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Resumen de ingresos fijos vs egresos</div>
+          <div id="resumenSueldo">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== UBER ======================== -->
+      <div class="page" id="page-uber">
+        <div class="page-header">
+          <div>
+            <h2>Uber / Ingresos variables</h2>
+            <p>Registrá tus ganancias diarias y seguí la meta</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modalUber')">+ Registrar día</button>
+        </div>
+
+        <!-- META DIARIA - HERO CARD -->
+        <div id="uberMetaCard" style="margin-bottom:24px;">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+
+        <!-- STATS -->
+        <div class="grid grid-4" style="margin-bottom:24px;" id="uberStats">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+
+        <!-- PROGRESO DEL MES -->
+        <div class="card" style="margin-bottom:24px;" id="uberProgresoCard">
+        </div>
+
+        <div class="card">
+          <div class="section-title">Historial de días trabajados</div>
+          <div id="listaUber">
+            <div class="loading"><div class="spinner"></div> Cargando...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== ANÁLISIS ======================== -->
+      <div class="page" id="page-analisis">
+        <div class="page-header">
+          <div>
+            <h2>Asesor Financiero</h2>
+            <p>Análisis inteligente de tu situación</p>
+          </div>
+          <button class="btn btn-primary" onclick="generarAnalisis()">🧠 Analizar ahora</button>
+        </div>
+
+        <div id="analisisContent">
+          <div style="text-align:center;padding:60px;color:var(--text3);">
+            <div style="font-size:48px;margin-bottom:16px;">🧠</div>
+            <p>Presioná "Analizar ahora" para generar un análisis completo de tu situación financiera.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== CONFIG ======================== -->
+      <div class="page" id="page-config">
+        <div class="page-header">
+          <div>
+            <h2>Configuración</h2>
+            <p>Ajustes de la aplicación</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="section-title">Conexión Google Sheets</div>
+            <div class="form-group">
+              <label class="form-label">URL del Apps Script</label>
+              <input class="form-input" type="url" id="configSheetUrl" placeholder="https://script.google.com/macros/s/..." />
+            </div>
+            <div class="sheet-status" style="margin-bottom:12px;">
+              <div class="status-dot" id="configStatusDot"></div>
+              <span id="configStatusText">Sin verificar</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost" onclick="testConnection()">Probar conexión</button>
+              <button class="btn btn-primary" onclick="guardarConfigFinal()">Guardar</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">Datos de la app</div>
+            <div class="form-group">
+              <label class="form-label">Modo de almacenamiento</label>
+              <div class="badge" id="modoBadge">Demo (memoria)</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-ghost" onclick="exportarDatos()">📤 Exportar datos (JSON)</button>
+              <button class="btn btn-danger" onclick="limpiarTodo()" style="margin-top:4px;">🗑️ Limpiar todos los datos</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" onclick="navigateTo('dashboard')" data-page="dashboard">
+    <span class="bn-icon">📊</span>
+    <span>Inicio</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navigateTo('prioridades')" data-page="prioridades">
+    <span class="bn-icon">🎯</span>
+    <span>Pagos</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navigateTo('uber')" data-page="uber">
+    <span class="bn-icon">🚗</span>
+    <span>Uber</span>
+  </button>
+  <button class="bottom-nav-item" onclick="navigateTo('tarjetas')" data-page="tarjetas">
+    <span class="bn-icon">💳</span>
+    <span>Tarjetas</span>
+  </button>
+  <button class="bottom-nav-item" onclick="openDrawer()" data-page="">
+    <span class="bn-icon">☰</span>
+    <span>Más</span>
+  </button>
+</nav>
+
+<!-- DRAWER OVERLAY (mobile) -->
+<div class="sidebar-drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- DRAWER (mobile sidebar) -->
+<div class="sidebar-drawer" id="sidebarDrawer">
+  <div class="sidebar-logo" style="padding:20px 16px 16px;">
+    <h1 style="font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--accent);">FinControl</h1>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:2px;">Panel de finanzas</span>
+  </div>
+  <nav style="flex:1;padding:8px 0;">
+    <div class="nav-group-label">Principal</div>
+    <div class="nav-item" onclick="navigateTo('dashboard');closeDrawer()"><span class="icon">📊</span> Dashboard</div>
+    <div class="nav-item" onclick="navigateTo('prioridades');closeDrawer()"><span class="icon">🎯</span> Prioridades</div>
+    <div class="nav-group-label">Deudas</div>
+    <div class="nav-item" onclick="navigateTo('prestamos');closeDrawer()"><span class="icon">🏦</span> Préstamos</div>
+    <div class="nav-item" onclick="navigateTo('tarjetas');closeDrawer()"><span class="icon">💳</span> Tarjetas</div>
+    <div class="nav-item" onclick="navigateTo('deudores');closeDrawer()"><span class="icon">👥</span> Me deben</div>
+    <div class="nav-group-label">Ingresos</div>
+    <div class="nav-item" onclick="navigateTo('sueldo');closeDrawer()"><span class="icon">💼</span> Ingresos fijos</div>
+    <div class="nav-item" onclick="navigateTo('uber');closeDrawer()"><span class="icon">🚗</span> Uber / Auto</div>
+    <div class="nav-group-label">Análisis</div>
+    <div class="nav-item" onclick="navigateTo('analisis');closeDrawer()"><span class="icon">🧠</span> Asesor IA</div>
+    <div class="nav-group-label">Sistema</div>
+    <div class="nav-item" onclick="navigateTo('config');closeDrawer()"><span class="icon">⚙️</span> Configuración</div>
+  </nav>
+  <div style="padding:14px 16px;border-top:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--text3);">
+      <div class="status-dot" id="drawerStatusDot"></div>
+      <span id="drawerStatusText">Verificando...</span>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== MODALS ======================== -->
+
+<!-- MODAL PRÉSTAMO -->
+<div class="modal-overlay" id="modalPrestamo">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalPrestamo')">✕</button>
+    <div class="modal-title">🏦 <span id="modalPrestamoTitulo">Nuevo Préstamo</span></div>
+
+    <input type="hidden" id="prestamo_edit_id" />
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre / descripción</label>
+        <input class="form-input" type="text" id="prestamo_nombre" placeholder="Ej: Préstamo BBVA" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de titular</label>
+        <select class="form-select" id="prestamo_tipo" onchange="togglePrestamoTipo()">
+          <option value="mio">100% Mío</option>
+          <option value="compartido">Compartido</option>
+          <option value="ajeno">De otra persona</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="prestamo_compartido_fields" style="display:none;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre del co-titular</label>
+          <input class="form-input" type="text" id="prestamo_cotitular" placeholder="Nombre" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">% que paga el otro</label>
+          <input class="form-input" type="number" id="prestamo_pct_otro" placeholder="50" min="0" max="100" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monto total del préstamo</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="prestamo_total" placeholder="0" onchange="calcularCuotaP()" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cuota mensual (lo que pagás vos)</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="prestamo_cuota" placeholder="0" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cuotas totales</label>
+        <input class="form-input" type="number" id="prestamo_cuotas_total" placeholder="Ej: 24" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cuotas pagadas</label>
+        <input class="form-input" type="number" id="prestamo_cuotas_pagadas" placeholder="Ej: 3" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Día de vencimiento (del mes)</label>
+        <input class="form-input" type="number" id="prestamo_vencimiento" placeholder="Ej: 10" min="1" max="31" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Banco / entidad</label>
+        <input class="form-input" type="text" id="prestamo_banco" placeholder="Ej: Banco Nación" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <textarea class="form-textarea" id="prestamo_notas" placeholder="Notas adicionales..."></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalPrestamo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPrestamo()">✓ Guardar préstamo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TARJETA NUEVA -->
+<div class="modal-overlay" id="modalTarjetaNueva">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalTarjetaNueva')">✕</button>
+    <div class="modal-title">💳 Nueva Tarjeta</div>
+
+    <input type="hidden" id="tarjeta_edit_id" />
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre de la tarjeta</label>
+        <input class="form-input" type="text" id="tarjeta_nombre" placeholder="Ej: VISA Santander" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Banco emisor</label>
+        <input class="form-input" type="text" id="tarjeta_banco" placeholder="Ej: Santander" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cierre (día del mes)</label>
+        <input class="form-input" type="number" id="tarjeta_cierre" placeholder="Ej: 5" min="1" max="31" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vencimiento (día del mes)</label>
+        <input class="form-input" type="number" id="tarjeta_vencimiento" placeholder="Ej: 20" min="1" max="31" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Límite de crédito</label>
+      <div class="sueldo-input-wrap">
+        <span class="sueldo-prefix">$</span>
+        <input class="form-input sueldo-input" type="number" id="tarjeta_limite" placeholder="0" />
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalTarjetaNueva')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarTarjeta()">✓ Guardar tarjeta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMPRA -->
+<div class="modal-overlay" id="modalCompra">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalCompra')">✕</button>
+    <div class="modal-title">🛒 <span id="modalCompraTitulo">Nueva Compra</span></div>
+
+    <input type="hidden" id="compra_edit_id" />
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <input class="form-input" type="text" id="compra_desc" placeholder="Ej: Heladera Samsung" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tarjeta</label>
+        <select class="form-select" id="compra_tarjeta">
+          <option value="">Seleccioná tarjeta</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="compra_tipo" onchange="toggleCompraTipo()">
+          <option value="mia">Mía (100%)</option>
+          <option value="compartida">Compartida</option>
+          <option value="ajena">De otra persona</option>
+        </select>
+      </div>
+      <div class="form-group" id="compra_persona_wrap">
+        <label class="form-label">Persona</label>
+        <input class="form-input" type="text" id="compra_persona" placeholder="Nombre" />
+      </div>
+    </div>
+
+    <div id="compra_compartida_pct" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">¿Qué % pagás vos?</label>
+        <input class="form-input" type="number" id="compra_pct_yo" placeholder="50" min="0" max="100" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monto total de la compra</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="compra_total" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cantidad de cuotas</label>
+        <input class="form-input" type="number" id="compra_cuotas" placeholder="1" min="1" value="1" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cuotas pagadas</label>
+        <input class="form-input" type="number" id="compra_cuotas_pagadas" placeholder="0" min="0" value="0" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de la compra</label>
+        <input class="form-input" type="date" id="compra_fecha" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Categoría</label>
+      <select class="form-select" id="compra_categoria">
+        <option value="electrodomesticos">Electrodomésticos</option>
+        <option value="ropa">Ropa / Calzado</option>
+        <option value="comida">Comida / Super</option>
+        <option value="tecnologia">Tecnología</option>
+        <option value="salud">Salud</option>
+        <option value="auto">Auto</option>
+        <option value="servicios">Servicios</option>
+        <option value="entretenimiento">Entretenimiento</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalCompra')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCompra()">✓ Guardar compra</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GASTO FIJO -->
+<div class="modal-overlay" id="modalGastoFijo">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('modalGastoFijo')">✕</button>
+    <div class="modal-title">🚗 Gasto Fijo del Auto</div>
+
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <input class="form-input" type="text" id="gasto_desc" placeholder="Ej: Seguro, nafta, service..." />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monto mensual</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="gasto_monto" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Día de pago</label>
+        <input class="form-input" type="number" id="gasto_dia" placeholder="Ej: 15" min="1" max="31" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <select class="form-select" id="gasto_tipo">
+        <option value="seguro">Seguro</option>
+        <option value="nafta">Nafta</option>
+        <option value="service">Service</option>
+        <option value="patente">Patente</option>
+        <option value="estacionamiento">Estacionamiento</option>
+        <option value="reparacion">Reparación</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalGastoFijo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarGastoFijo()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL UBER -->
+<div class="modal-overlay" id="modalUber">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('modalUber')">✕</button>
+    <div class="modal-title">🚗 Registrar día de Uber</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input class="form-input" type="date" id="uber_fecha" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ganancias del día</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="uber_monto" placeholder="0" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Horas trabajadas</label>
+        <input class="form-input" type="number" id="uber_horas" placeholder="Ej: 6" step="0.5" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gastos del día (nafta, etc)</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="uber_gastos" placeholder="0" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <input class="form-input" type="text" id="uber_notas" placeholder="Ej: Lluvia, evento, feriado..." />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalUber')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarUber()">✓ Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INGRESO FIJO -->
+<div class="modal-overlay" id="modalIngresoFijo">
+  <div class="modal" style="max-width:440px;">
+    <button class="modal-close" onclick="closeModal('modalIngresoFijo')">✕</button>
+    <div class="modal-title">💼 <span id="modalIngresoTitulo">Nuevo Ingreso Fijo</span></div>
+
+    <input type="hidden" id="ingreso_edit_id" />
+
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <input class="form-input" type="text" id="ingreso_desc" placeholder="Ej: Sueldo empresa, Freelance, Alquiler..." />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monto mensual neto</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="ingreso_monto" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Día de cobro</label>
+        <input class="form-input" type="number" id="ingreso_dia" placeholder="Ej: 15" min="1" max="31" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <select class="form-select" id="ingreso_tipo">
+        <option value="sueldo">Sueldo en relación de dependencia</option>
+        <option value="freelance">Freelance / Honorarios</option>
+        <option value="alquiler">Alquiler / Renta</option>
+        <option value="negocio">Negocio propio</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <input class="form-input" type="text" id="ingreso_notas" placeholder="Opcional" />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalIngresoFijo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarIngresoFijo()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+// ============================================================
+// STATE & CONFIG — PRODUCCIÓN
+// ============================================================
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwdHEyuVjji1Nab8JVSLk6JIaQt0hVOuw2g5Ec86rsUmBAmTfm9DRWYLmdpIIiwA2p0/exec';
+
+let CONFIG = {
+  sheetUrl: SHEET_URL,
+  sueldo: 0,
+  sueldoDia: 1,
+  modo: 'sheets'
+};
+
+// In-memory DB (caché local — fuente de verdad siempre es Sheets)
+let DB = {
+  prestamos: [],
+  tarjetas: [],
+  compras: [],
+  gastosFijos: [],
+  uber: [],
+  ingresosFijos: [],
+  config: {}
+};
+
+let currentPage = 'dashboard';
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', async () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('uber_fecha').value = today;
+  document.getElementById('compra_fecha').value = today;
+
+  // Mostrar app de inmediato, conectar en background
+  showApp();
+  await syncAll();
+});
+
+function showApp() {
+  document.getElementById('mainApp').style.display = 'flex';
+  const urlInput = document.getElementById('configSheetUrl');
+  if (urlInput) urlInput.value = SHEET_URL;
+  updateStatusUI(false); // se actualiza en syncAll
+  navigateTo('dashboard');
+}
+
+// ============================================================
+// SHEETS API — JSONP (evita CORS de Google Apps Script)
+// ============================================================
+function sheetRequest(params) {
+  return new Promise((resolve) => {
+    // Nombre único para el callback
+    const cbName = 'fc_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+
+    // Timeout de 12 segundos
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve({ ok: false, error: 'Timeout — sin respuesta del servidor' });
+    }, 12000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      const el = document.getElementById(cbName);
+      if (el) el.remove();
+    }
+
+    // Registrar callback global
+    window[cbName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+
+    // Construir URL con callback
+    const url = new URL(SHEET_URL);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    url.searchParams.set('callback', cbName);
+
+    // Inyectar script tag
+    const script = document.createElement('script');
+    script.id = cbName;
+    script.src = url.toString();
+    script.onerror = () => {
+      cleanup();
+      resolve({ ok: false, error: 'Error al cargar el script JSONP' });
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function readTabla(tabla) {
+  const res = await sheetRequest({ action: 'read', tabla });
+  if (res.ok) {
+    DB[tabla] = res.data || [];
+    return DB[tabla];
+  }
+  return DB[tabla] || [];
+}
+
+async function writeRow(tabla, id, obj) {
+  obj.id = id;
+  const res = await sheetRequest({ action: 'write', tabla, id, data: JSON.stringify(obj) });
+  if (res.ok) {
+    if (!DB[tabla]) DB[tabla] = [];
+    const idx = DB[tabla].findIndex(r => r.id === id);
+    if (idx >= 0) DB[tabla][idx] = obj;
+    else DB[tabla].push(obj);
+  }
+  return res.ok;
+}
+
+async function deleteRow(tabla, id) {
+  const res = await sheetRequest({ action: 'delete', tabla, id });
+  if (res.ok && DB[tabla]) {
+    DB[tabla] = DB[tabla].filter(r => r.id !== id);
+  }
+  return res.ok;
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+// ============================================================
+// CONFIG & CONNECTION
+// ============================================================
+async function syncAll() {
+  updateStatusLoading();
+
+  // Detectar si se abre desde file:// (CORS bloqueado)
+  if (window.location.protocol === 'file:') {
+    updateStatusUI(false);
+    showCorsWarning();
+    // Igual muestra la app con datos vacíos
+    loadPageData(currentPage);
+    return;
+  }
+
+  try {
+    const ping = await sheetRequest({ action: 'ping' });
+    if (!ping.ok) throw new Error(ping.error || 'Sin respuesta del servidor');
+
+    await readTabla('prestamos');
+    await readTabla('tarjetas');
+    await readTabla('compras');
+    await readTabla('gastosFijos');
+    await readTabla('uber');
+    await readTabla('ingresosFijos');
+    await readTabla('config');
+
+    const configRow = (DB.config || []).find?.(r => r.id === 'main');
+    if (configRow) {
+      CONFIG.sueldo = configRow.sueldo || CONFIG.sueldo;
+      CONFIG.sueldoDia = configRow.sueldoDia || CONFIG.sueldoDia;
+    }
+
+    updateStatusUI(true);
+    loadPageData(currentPage);
+    toast('Sincronizado ✓', 'success');
+  } catch(e) {
+    updateStatusUI(false);
+    toast('No se pudo conectar con Google Sheets. Verificá la URL del Apps Script.', 'error');
+    loadPageData(currentPage);
+  }
+}
+
+function showCorsWarning() {
+  // Mostrar banner solo si no existe ya
+  if (document.getElementById('corsWarning')) return;
+  const banner = document.createElement('div');
+  banner.id = 'corsWarning';
+  banner.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: #ff6b00; color: #000; padding: 10px 16px;
+    font-size: 12px; font-family: 'Space Mono', monospace;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  `;
+  banner.innerHTML = `
+    <span>⚠ Abriste el archivo directo desde tu PC (file://). Para conectar con Google Sheets subí el archivo a <strong>GitHub Pages</strong> o usá un servidor local.</span>
+    <button onclick="this.parentElement.remove()" style="background:none;border:1px solid rgba(0,0,0,0.3);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">✕</button>
+  `;
+  document.body.prepend(banner);
+  // Empujar el contenido hacia abajo
+  document.querySelector('.main').style.paddingTop = '42px';
+}
+
+function updateStatusUI(connected) {
+  const dotIds = ['sidebarStatusDot','topbarDot','configStatusDot','drawerStatusDot'];
+  const textIds = ['sidebarStatusText','topbarStatusText','configStatusText','drawerStatusText'];
+  const dots = dotIds.map(id => document.getElementById(id)).filter(Boolean);
+  const texts = textIds.map(id => document.getElementById(id)).filter(Boolean);
+  const badge = document.getElementById('modoBadge');
+
+  dots.forEach(d => { d.className = 'status-dot ' + (connected ? 'green' : 'red'); });
+  texts.forEach(t => { t.textContent = connected ? 'Sheets conectado' : 'Sin conexión'; });
+  if (badge) badge.textContent = 'Google Sheets';
+}
+
+function updateStatusLoading() {
+  const dotIds = ['sidebarStatusDot','topbarDot','drawerStatusDot'];
+  const textIds = ['sidebarStatusText','topbarStatusText','drawerStatusText'];
+  const dots = dotIds.map(id => document.getElementById(id)).filter(Boolean);
+  const texts = textIds.map(id => document.getElementById(id)).filter(Boolean);
+  dots.forEach(d => { d.className = 'status-dot yellow'; });
+  texts.forEach(t => { t.textContent = 'Conectando...'; });
+}
+
+async function testConnection() {
+  await syncAll();
+}
+
+async function guardarConfigFinal() {
+  toast('La URL está hardcodeada en producción', 'warning');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const pageTitles = {
+  dashboard: ['Dashboard', 'Resumen general de tus finanzas'],
+  prioridades: ['Plan de pagos', 'Ordenado por urgencia de vencimiento'],
+  prestamos: ['Préstamos', 'Gestión de todas tus deudas bancarias'],
+  tarjetas: ['Tarjetas de crédito', 'Compras y cuotas'],
+  deudores: ['Me deben', 'Resumen de lo que te deben'],
+  sueldo: ['Ingresos fijos & Auto', 'Sueldos, rentas y gastos del auto'],
+  uber: ['Uber / Ingresos variables', 'Registro diario de ganancias'],
+  analisis: ['Asesor Financiero', 'Análisis inteligente de tu situación'],
+  config: ['Configuración', 'Ajustes de la aplicación']
+};
+
+function navigateTo(page) {
+  currentPage = page;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('page-' + page)?.classList.add('active');
+  // Sync sidebar nav items (desktop + drawer)
+  document.querySelectorAll(`[onclick*="navigateTo('${page}')"]`).forEach(el => {
+    if (el.classList.contains('nav-item')) el.classList.add('active');
+  });
+
+  // Sync bottom nav
+  document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === page);
+  });
+
+  const [title, sub] = pageTitles[page] || [page, ''];
+  document.getElementById('topbarTitle').textContent = title;
+  document.getElementById('topbarSub').textContent = sub;
+
+  // Scroll to top on mobile
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  loadPageData(page);
+}
+
+// ============================================================
+// DRAWER (mobile)
+// ============================================================
+function openDrawer() {
+  document.getElementById('sidebarDrawer')?.classList.add('open');
+  document.getElementById('drawerOverlay')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('sidebarDrawer')?.classList.remove('open');
+  document.getElementById('drawerOverlay')?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function loadPageData(page) {
+  switch(page) {
+    case 'dashboard': await refreshDashboard(); break;
+    case 'prioridades': await refreshPrioridades(); break;
+    case 'prestamos': await refreshPrestamos(); break;
+    case 'tarjetas': await refreshTarjetas(); break;
+    case 'deudores': await refreshDeudores(); break;
+    case 'sueldo': await refreshSueldo(); break;
+    case 'uber': await refreshUber(); break;
+  }
+}
+
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(group, tab) {
+  const container = document.getElementById('page-' + group);
+  if (!container) return;
+
+  container.querySelectorAll('.tab').forEach((t, i) => {
+    const tabId = t.getAttribute('onclick')?.match(/'([^']+)'\)$/)?.[1];
+    t.classList.toggle('active', tabId === tab);
+  });
+
+  container.querySelectorAll('.tab-content').forEach(tc => {
+    tc.classList.toggle('active', tc.id === group + '-tab-' + tab);
+  });
+
+  // Populate the specific tab
+  if (group === 'prestamos') renderPrestamosTabs();
+  if (group === 'tarjetas') renderComprasTabs();
+}
+
+// ============================================================
+// FORMATTING HELPERS
+// ============================================================
+function fmt(n) {
+  return '$' + Math.round(n || 0).toLocaleString('es-AR');
+}
+
+function daysUntil(dia) {
+  const today = new Date();
+  const target = new Date(today.getFullYear(), today.getMonth(), dia);
+  if (target < today) target.setMonth(target.getMonth() + 1);
+  return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+}
+
+function urgencyClass(days) {
+  if (days <= 5) return 'urgent';
+  if (days <= 15) return 'soon';
+  return 'ok';
+}
+
+function urgencyDotClass(days) {
+  if (days <= 5) return 'dot-urgent';
+  if (days <= 15) return 'dot-soon';
+  return 'dot-ok';
+}
+
+function categEmoji(cat) {
+  const m = { electrodomesticos:'🔌', ropa:'👕', comida:'🛒', tecnologia:'💻', salud:'🏥', auto:'🚗', servicios:'💡', entretenimiento:'🎮', seguro:'🛡️', nafta:'⛽', service:'🔧', patente:'📄', otro:'📦' };
+  return m[cat] || '📦';
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function refreshDashboard() {
+  const today = new Date();
+  document.getElementById('dashFecha').textContent = today.toLocaleDateString('es-AR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const sueldo = calcTotalIngresosFijos();
+  const gastosPrestamos = calcTotalPrestamos();
+  const gastosTarjetas = calcTotalTarjetas();
+  const gastosFijos = calcTotalGastosFijos();
+  const totalGastos = gastosPrestamos + gastosTarjetas + gastosFijos;
+
+  const uberMes = calcUberMes();
+  const ingresos = sueldo + uberMes;
+  const balance = ingresos - totalGastos;
+  const diasMes = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const diasRestantes = diasMes - today.getDate();
+  const metaDiaria = balance < 0 ? Math.abs(balance) / Math.max(diasRestantes, 1) : 0;
+
+  document.getElementById('dash-ingresos').textContent = fmt(ingresos);
+  document.getElementById('dash-ingresos-sub').textContent = `Sueldo ${fmt(sueldo)} + Uber ${fmt(uberMes)}`;
+  document.getElementById('dash-gastos').textContent = fmt(totalGastos);
+  document.getElementById('dash-gastos-sub').textContent = `Préstamos + Tarjetas + Fijos`;
+  document.getElementById('dash-balance').textContent = fmt(balance);
+  document.getElementById('dash-balance').className = 'stat-value ' + (balance >= 0 ? 'green' : 'red');
+  document.getElementById('dash-balance-sub').textContent = balance >= 0 ? '✓ Estás en positivo' : '⚠ Hay déficit';
+  document.getElementById('dash-meta-uber').textContent = fmt(metaDiaria);
+  document.getElementById('dash-meta-sub').textContent = metaDiaria > 0 ? `por día — ${diasRestantes} días restantes` : 'No necesitás meta';
+
+  renderDashVencimientos();
+  renderDashDistribucion(gastosPrestamos, gastosTarjetas, gastosFijos);
+  renderDashMeDeben();
+}
+
+function renderDashVencimientos() {
+  const items = getAllPagos().filter(p => p.dias <= 7).sort((a,b) => a.dias - b.dias);
+  const el = document.getElementById('dashVencimientos');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><p class="empty-text">No hay vencimientos en 7 días</p></div>';
+    return;
+  }
+  el.innerHTML = items.map(p => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-weight:700;font-size:13px;">${p.nombre}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);">Vence en ${p.dias} días</div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-weight:700;font-size:14px;color:${p.dias<=3?'var(--danger)':'var(--accent3)'};">${fmt(p.monto)}</div>
+        <span class="badge ${p.dias<=3?'badge-red':'badge-yellow'}">${p.dias<=3?'URGENTE':'PRÓXIMO'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderDashDistribucion(prestamos, tarjetas, fijos) {
+  const el = document.getElementById('dashDistribucion');
+  const total = prestamos + tarjetas + fijos || 1;
+  const items = [
+    { label:'Préstamos', value:prestamos, color:'var(--accent4)' },
+    { label:'Tarjetas', value:tarjetas, color:'var(--purple)' },
+    { label:'Gastos fijos', value:fijos, color:'var(--accent3)' }
+  ];
+  el.innerHTML = items.map(item => `
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:600;">${item.label}</span>
+        <span style="font-family:var(--mono);font-size:12px;">${fmt(item.value)}</span>
+      </div>
+      <div class="progress-bar">
+        <div style="width:${Math.round(item.value/total*100)}%;background:${item.color};" class="progress-fill"></div>
+      </div>
+      <div class="hint" style="margin-top:3px;">${Math.round(item.value/total*100)}% del total</div>
+    </div>
+  `).join('');
+}
+
+function renderDashMeDeben() {
+  const el = document.getElementById('dashMeDeben');
+  const deudores = calcDeudores();
+  if (!deudores.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><p class="empty-text">Nadie te debe plata</p></div>';
+    return;
+  }
+  el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:10px;">` +
+    deudores.map(d => `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;">
+        <div style="font-weight:700;font-size:13px;">${d.nombre}</div>
+        <div style="font-family:var(--mono);font-size:18px;color:var(--accent3);margin-top:4px;">${fmt(d.total)}</div>
+        <div class="hint">${d.items} concepto(s)</div>
+      </div>
+    `).join('') + '</div>';
+}
+
+// ============================================================
+// PRIORIDADES
+// ============================================================
+async function refreshPrioridades() {
+  const pagos = getAllPagos().sort((a,b) => a.dias - b.dias);
+  const totalNecesario = pagos.reduce((s,p) => s + p.monto, 0);
+  const sueldo = calcTotalIngresosFijos();
+
+  document.getElementById('prio-faltante').textContent = fmt(faltante);
+
+  const today = new Date();
+  const diasMes = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const diasRestantes = Math.max(diasMes - today.getDate(), 1);
+  const metaDiaria = faltante > 0 ? faltante / diasRestantes : 0;
+  const uberAcum = calcUberAcumulado();
+  const progPct = faltante > 0 ? Math.min((uberAcum / faltante) * 100, 100) : 100;
+
+  document.getElementById('prio-meta-uber').textContent = fmt(metaDiaria);
+  document.getElementById('prio-dias-restantes').textContent = `${diasRestantes} días restantes en el mes`;
+  document.getElementById('prio-progress-uber').style.width = progPct + '%';
+  document.getElementById('prio-uber-hint').textContent = `Uber acumulado este mes: ${fmt(uberAcum)} / ${fmt(faltante)} necesarios`;
+
+  // Timeline
+  const tlEl = document.getElementById('prioTimeline');
+  if (!pagos.length) {
+    tlEl.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><p>No hay pagos registrados</p></div>';
+  } else {
+    tlEl.innerHTML = '<div class="timeline">' + pagos.map((p,i) => `
+      <div class="timeline-item">
+        <div class="timeline-dot ${urgencyDotClass(p.dias)}">${i+1}</div>
+        <div class="timeline-content">
+          <div class="timeline-name">${p.nombre}</div>
+          <div class="timeline-detail">
+            ${p.tipo} · Vence día ${p.diaVence} · ${p.dias === 0 ? '¡HOY!' : `en ${p.dias} días`}
+            ${p.cuotas ? `· cuota ${p.cuotaActual}/${p.cuotas}` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="timeline-amount">${fmt(p.monto)}</div>
+          <span class="badge ${p.dias<=5?'badge-red':p.dias<=15?'badge-yellow':'badge-green'}">${p.dias<=5?'URGENTE':p.dias<=15?'PRÓXIMO':'OK'}</span>
+        </div>
+      </div>
+    `).join('') + '</div>';
+  }
+
+  // Ingresos comparison
+  document.getElementById('prioIngresos').innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;">Sueldo fijo</span>
+        <span style="font-family:var(--mono);font-size:12px;">${fmt(sueldo)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;">Uber este mes</span>
+        <span style="font-family:var(--mono);font-size:12px;">${fmt(uberMes)}</span>
+      </div>
+      <div class="sep" style="margin:8px 0;"></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:700;">Total ingresos</span>
+        <span style="font-family:var(--mono);font-size:14px;color:var(--accent);">${fmt(ingresos)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:700;">Total necesario</span>
+        <span style="font-family:var(--mono);font-size:14px;color:var(--accent2);">${fmt(totalNecesario)}</span>
+      </div>
+      <div class="sep" style="margin:8px 0;"></div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:700;">Diferencia</span>
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:${ingresos>=totalNecesario?'var(--accent)':'var(--danger)'};">${fmt(ingresos-totalNecesario)}</span>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// CALCULATIONS
+// ============================================================
+function getAllPagos() {
+  const pagos = [];
+
+  // Préstamos
+  DB.prestamos?.forEach(p => {
+    if (!p || p.tipo === 'ajeno') return;
+    const cuotasTotal = parseInt(p.cuotas_total) || 0;
+    const cuotasPagadas = parseInt(p.cuotas_pagadas) || 0;
+    if (cuotasPagadas >= cuotasTotal && cuotasTotal > 0) return;
+    const dias = daysUntil(parseInt(p.vencimiento) || 1);
+    pagos.push({
+      id: p.id,
+      nombre: p.nombre,
+      tipo: 'Préstamo',
+      monto: parseFloat(p.cuota) || 0,
+      diaVence: p.vencimiento,
+      dias,
+      cuotas: cuotasTotal,
+      cuotaActual: cuotasPagadas + 1,
+      categoria: 'prestamo'
+    });
+  });
+
+  // Tarjetas (vencimiento mensual)
+  DB.tarjetas?.forEach(t => {
+    if (!t) return;
+    const comprasTarjeta = (DB.compras || []).filter(c => c.tarjeta_id === t.id);
+    const totalMes = comprasTarjeta.reduce((s, c) => {
+      if (c.tipo === 'ajena') return s;
+      const cuotas = parseInt(c.cuotas) || 1;
+      const pagadas = parseInt(c.cuotas_pagadas) || 0;
+      if (pagadas >= cuotas) return s;
+      const cuotaMensual = parseFloat(c.total) / cuotas;
+      const miParte = c.tipo === 'compartida' ? cuotaMensual * ((parseInt(c.pct_yo)||50)/100) : cuotaMensual;
+      return s + miParte;
+    }, 0);
+    if (totalMes <= 0) return;
+    const dias = daysUntil(parseInt(t.vencimiento) || 20);
+    pagos.push({
+      id: t.id,
+      nombre: t.nombre,
+      tipo: 'Tarjeta',
+      monto: totalMes,
+      diaVence: t.vencimiento,
+      dias,
+      categoria: 'tarjeta'
+    });
+  });
+
+  // Gastos fijos
+  DB.gastosFijos?.forEach(g => {
+    if (!g) return;
+    const dias = daysUntil(parseInt(g.dia) || 1);
+    pagos.push({
+      id: g.id,
+      nombre: g.desc,
+      tipo: 'Gasto fijo',
+      monto: parseFloat(g.monto) || 0,
+      diaVence: g.dia,
+      dias,
+      categoria: 'fijo'
+    });
+  });
+
+  return pagos;
+}
+
+function calcTotalPrestamos() {
+  return (DB.prestamos || []).reduce((s, p) => {
+    if (!p || p.tipo === 'ajeno') return s;
+    const cuotasTotal = parseInt(p.cuotas_total) || 0;
+    const cuotasPagadas = parseInt(p.cuotas_pagadas) || 0;
+    if (cuotasPagadas >= cuotasTotal && cuotasTotal > 0) return s;
+    return s + (parseFloat(p.cuota) || 0);
+  }, 0);
+}
+
+function calcTotalTarjetas() {
+  return (DB.compras || []).reduce((s, c) => {
+    if (!c || c.tipo === 'ajena') return s;
+    const cuotas = parseInt(c.cuotas) || 1;
+    const pagadas = parseInt(c.cuotas_pagadas) || 0;
+    if (pagadas >= cuotas) return s;
+    const cuotaMensual = parseFloat(c.total) / cuotas;
+    const miParte = c.tipo === 'compartida' ? cuotaMensual * ((parseInt(c.pct_yo)||50)/100) : cuotaMensual;
+    return s + miParte;
+  }, 0);
+}
+
+function calcTotalGastosFijos() {
+  return (DB.gastosFijos || []).reduce((s, g) => s + (parseFloat(g?.monto) || 0), 0);
+}
+
+function calcTotalIngresosFijos() {
+  // Suma todos los ingresos fijos registrados, con fallback al CONFIG.sueldo legacy
+  const desde_tabla = (DB.ingresosFijos || []).reduce((s, i) => s + (parseFloat(i?.monto) || 0), 0);
+  if (desde_tabla > 0) return desde_tabla;
+  return CONFIG.sueldo || 0; // legacy fallback
+}
+
+function calcUberMes() {
+  const today = new Date();
+  const mes = today.getMonth();
+  const anio = today.getFullYear();
+  return (DB.uber || []).reduce((s, u) => {
+    if (!u) return s;
+    const d = new Date(u.fecha);
+    if (d.getMonth() === mes && d.getFullYear() === anio) {
+      return s + (parseFloat(u.monto) || 0) - (parseFloat(u.gastos) || 0);
+    }
+    return s;
+  }, 0);
+}
+
+function calcUberAcumulado() {
+  return calcUberMes();
+}
+
+function calcDeudores() {
+  const map = {};
+
+  // Desde préstamos compartidos
+  (DB.prestamos || []).forEach(p => {
+    if (!p || p.tipo !== 'compartido' || !p.cotitular) return;
+    const cuotasTotal = parseInt(p.cuotas_total) || 0;
+    const cuotasPagadas = parseInt(p.cuotas_pagadas) || 0;
+    if (cuotasPagadas >= cuotasTotal && cuotasTotal > 0) return;
+    const pctOtro = parseInt(p.pct_otro) || 50;
+    const cuotaTotal = parseFloat(p.cuota) / ((100 - pctOtro) / 100);
+    const parteOtro = cuotaTotal * (pctOtro / 100);
+    const nombre = p.cotitular;
+    if (!map[nombre]) map[nombre] = { nombre, total: 0, items: 0 };
+    map[nombre].total += parteOtro;
+    map[nombre].items++;
+  });
+
+  // Desde compras compartidas/ajenas
+  (DB.compras || []).forEach(c => {
+    if (!c || !c.persona) return;
+    const cuotas = parseInt(c.cuotas) || 1;
+    const pagadas = parseInt(c.cuotas_pagadas) || 0;
+    if (pagadas >= cuotas) return;
+    const cuotaMensual = parseFloat(c.total) / cuotas;
+
+    if (c.tipo === 'compartida') {
+      const pctYo = parseInt(c.pct_yo) || 50;
+      const parteOtro = cuotaMensual * ((100 - pctYo) / 100);
+      const n = c.persona;
+      if (!map[n]) map[n] = { nombre: n, total: 0, items: 0 };
+      map[n].total += parteOtro;
+      map[n].items++;
+    } else if (c.tipo === 'ajena') {
+      const n = c.persona;
+      if (!map[n]) map[n] = { nombre: n, total: 0, items: 0 };
+      map[n].total += cuotaMensual;
+      map[n].items++;
+    }
+  });
+
+  return Object.values(map).filter(d => d.total > 0);
+}
+
+// ============================================================
+// PRÉSTAMOS
+// ============================================================
+async function refreshPrestamos() {
+  await readTabla('prestamos');
+  renderPrestamosTabs();
+  renderPrestamosTabla(DB.prestamos || [], 'listaPrestamos');
+}
+
+function renderPrestamosTabs() {
+  const all = DB.prestamos || [];
+  const mios = all.filter(p => p.tipo === 'mio');
+  const comp = all.filter(p => p.tipo === 'compartido');
+  const ajenos = all.filter(p => p.tipo === 'ajeno');
+  renderPrestamosTabla(mios, null, 'prestamos-tab-mios');
+  renderPrestamosTabla(comp, null, 'prestamos-tab-compartidos');
+  renderPrestamosTabla(ajenos, null, 'prestamos-tab-ajenos');
+}
+
+function renderPrestamosTabla(list, elId, parentId) {
+  const html = (list && list.length) ?
+    `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>Nombre</th><th>Banco</th><th>Tipo</th><th>Cuota mía</th>
+        <th>Cuotas</th><th>Vencimiento</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${list.map(p => {
+          const cuotasTotal = parseInt(p.cuotas_total)||0;
+          const cuotasPagadas = parseInt(p.cuotas_pagadas)||0;
+          const terminado = cuotasTotal > 0 && cuotasPagadas >= cuotasTotal;
+          const dias = terminado ? 999 : daysUntil(parseInt(p.vencimiento)||1);
+          const tipoBadge = { mio:'badge-blue', compartido:'badge-yellow', ajeno:'badge-gray' };
+          const tipoLabel = { mio:'Mío', compartido:'Compartido', ajeno:'Ajeno' };
+          return `<tr>
+            <td class="td-bold">${p.nombre}</td>
+            <td style="color:var(--text2);">${p.banco||'—'}</td>
+            <td><span class="badge ${tipoBadge[p.tipo]||'badge-gray'}">${tipoLabel[p.tipo]||p.tipo}</span></td>
+            <td class="td-mono">${fmt(p.cuota)}</td>
+            <td>
+              <div class="cuota-progress">
+                ${cuotasPagadas}/${cuotasTotal}
+              </div>
+            </td>
+            <td class="td-mono">Día ${p.vencimiento}</td>
+            <td>
+              ${terminado
+                ? '<span class="badge badge-green">PAGADO</span>'
+                : `<span class="badge ${dias<=5?'badge-red':dias<=15?'badge-yellow':'badge-green'}">${dias<=5?'URGENTE':dias<=15?'PRÓXIMO':'OK'}</span>`}
+            </td>
+            <td>
+              <div style="display:flex;gap:4px;">
+                <button class="btn btn-ghost btn-sm" onclick="editPrestamo('${p.id}')">✎</button>
+                <button class="btn btn-ghost btn-sm delete-btn" onclick="deletePrestamo('${p.id}')">✕</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>` :
+    '<div class="empty"><div class="empty-icon">🏦</div><p class="empty-text">No hay préstamos registrados</p></div>';
+
+  if (elId) document.getElementById(elId).innerHTML = html;
+  if (parentId) document.getElementById(parentId).innerHTML = html;
+}
+
+function togglePrestamoTipo() {
+  const tipo = document.getElementById('prestamo_tipo').value;
+  document.getElementById('prestamo_compartido_fields').style.display =
+    tipo === 'compartido' ? 'block' : 'none';
+}
+
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+async function guardarPrestamo() {
+  const id = document.getElementById('prestamo_edit_id').value || genId();
+  const obj = {
+    id,
+    nombre: document.getElementById('prestamo_nombre').value,
+    tipo: document.getElementById('prestamo_tipo').value,
+    cotitular: document.getElementById('prestamo_cotitular').value,
+    pct_otro: document.getElementById('prestamo_pct_otro').value,
+    total: document.getElementById('prestamo_total').value,
+    cuota: document.getElementById('prestamo_cuota').value,
+    cuotas_total: document.getElementById('prestamo_cuotas_total').value,
+    cuotas_pagadas: document.getElementById('prestamo_cuotas_pagadas').value,
+    vencimiento: document.getElementById('prestamo_vencimiento').value,
+    banco: document.getElementById('prestamo_banco').value,
+    notas: document.getElementById('prestamo_notas').value,
+  };
+
+  if (!obj.nombre || !obj.cuota) { toast('Completá nombre y cuota', 'warning'); return; }
+
+  const ok = await writeRow('prestamos', id, obj);
+  if (ok) {
+    toast('Préstamo guardado ✓', 'success');
+    closeModal('modalPrestamo');
+    resetPrestamoForm();
+    refreshPrestamos();
+  } else {
+    toast('Error al guardar', 'error');
+  }
+}
+
+function resetPrestamoForm() {
+  ['prestamo_edit_id','prestamo_nombre','prestamo_cotitular','prestamo_pct_otro','prestamo_total',
+   'prestamo_cuota','prestamo_cuotas_total','prestamo_cuotas_pagadas','prestamo_vencimiento',
+   'prestamo_banco','prestamo_notas'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('prestamo_tipo').value = 'mio';
+  document.getElementById('prestamo_compartido_fields').style.display = 'none';
+  document.getElementById('modalPrestamoTitulo').textContent = 'Nuevo Préstamo';
+}
+
+function editPrestamo(id) {
+  const p = DB.prestamos.find(r => r.id === id);
+  if (!p) return;
+  document.getElementById('prestamo_edit_id').value = p.id;
+  document.getElementById('prestamo_nombre').value = p.nombre||'';
+  document.getElementById('prestamo_tipo').value = p.tipo||'mio';
+  document.getElementById('prestamo_cotitular').value = p.cotitular||'';
+  document.getElementById('prestamo_pct_otro').value = p.pct_otro||'';
+  document.getElementById('prestamo_total').value = p.total||'';
+  document.getElementById('prestamo_cuota').value = p.cuota||'';
+  document.getElementById('prestamo_cuotas_total').value = p.cuotas_total||'';
+  document.getElementById('prestamo_cuotas_pagadas').value = p.cuotas_pagadas||'';
+  document.getElementById('prestamo_vencimiento').value = p.vencimiento||'';
+  document.getElementById('prestamo_banco').value = p.banco||'';
+  document.getElementById('prestamo_notas').value = p.notas||'';
+  togglePrestamoTipo();
+  document.getElementById('modalPrestamoTitulo').textContent = 'Editar Préstamo';
+  openModal('modalPrestamo');
+}
+
+async function deletePrestamo(id) {
+  if (!confirm('¿Eliminar este préstamo?')) return;
+  await deleteRow('prestamos', id);
+  toast('Eliminado', 'success');
+  refreshPrestamos();
+}
+
+function calcularCuotaP() {
+  // helper if needed
+}
+
+// ============================================================
+// TARJETAS
+// ============================================================
+async function refreshTarjetas() {
+  await readTabla('tarjetas');
+  await readTabla('compras');
+  renderTarjetasCards();
+  renderComprasTabla(DB.compras || [], 'listaCompras');
+  renderComprasTabs();
+  populateTarjetaSelect();
+}
+
+function renderTarjetasCards() {
+  const el = document.getElementById('listaTarjetas');
+  const tarjetas = DB.tarjetas || [];
+  if (!tarjetas.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">💳</div><p>No hay tarjetas. Agregá una.</p></div>';
+    return;
+  }
+  el.innerHTML = `<div class="grid grid-3">` + tarjetas.map(t => {
+    const compras = (DB.compras||[]).filter(c => c.tarjeta_id === t.id);
+    const totalMes = compras.reduce((s,c) => {
+      if (c.tipo === 'ajena') return s;
+      const cuotas = parseInt(c.cuotas)||1;
+      const pagadas = parseInt(c.cuotas_pagadas)||0;
+      if (pagadas >= cuotas) return s;
+      const cuotaM = parseFloat(c.total)/cuotas;
+      const parte = c.tipo === 'compartida' ? cuotaM*((parseInt(c.pct_yo)||50)/100) : cuotaM;
+      return s + parte;
+    }, 0);
+    const diasVence = daysUntil(parseInt(t.vencimiento)||20);
+    return `<div class="card card-accent-purple">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:800;font-size:16px;">💳 ${t.nombre}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);">${t.banco||''}</div>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" onclick="editTarjeta('${t.id}')">✎</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteTarjeta('${t.id}')">✕</button>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div class="stat-label">Total a pagar este mes</div>
+        <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--purple);">${fmt(totalMes)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);font-family:var(--mono);">
+        <span>Cierre: día ${t.cierre||'—'}</span>
+        <span>Vence: día ${t.vencimiento||'—'} (${diasVence} días)</span>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function renderComprasTabs() {
+  const all = DB.compras || [];
+  renderComprasTabla(all.filter(c => c.tipo === 'mia'), null, 'tarjetas-tab-mias');
+  renderComprasTabla(all.filter(c => c.tipo === 'compartida'), null, 'tarjetas-tab-compartidas');
+  renderComprasTabla(all.filter(c => c.tipo === 'ajena'), null, 'tarjetas-tab-ajenas');
+}
+
+function renderComprasTabla(list, elId, parentId) {
+  const tarjetas = DB.tarjetas || [];
+  const getTarjeta = id => tarjetas.find(t => t.id === id)?.nombre || '—';
+  const html = (list && list.length) ?
+    `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>Descripción</th><th>Tarjeta</th><th>Categoría</th><th>Tipo</th>
+        <th>Total</th><th>Cuota mensual</th><th>Cuotas</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${list.map(c => {
+          const cuotas = parseInt(c.cuotas)||1;
+          const pagadas = parseInt(c.cuotas_pagadas)||0;
+          const restantes = Math.max(cuotas - pagadas, 0);
+          const cuotaM = parseFloat(c.total)/cuotas;
+          const miParte = c.tipo === 'compartida' ? cuotaM*((parseInt(c.pct_yo)||50)/100) : cuotaM;
+          const terminado = pagadas >= cuotas;
+          return `<tr>
+            <td>
+              <div class="td-bold">${c.desc}</div>
+              ${c.persona ? `<div class="hint">${c.tipo==='ajena'?'Pagado por':'Con'}: ${c.persona}</div>` : ''}
+            </td>
+            <td style="color:var(--text2);">${getTarjeta(c.tarjeta_id)}</td>
+            <td>${categEmoji(c.categoria)} <span style="font-size:12px;">${c.categoria||'—'}</span></td>
+            <td><span class="badge ${c.tipo==='mia'?'badge-blue':c.tipo==='compartida'?'badge-yellow':'badge-gray'}">${c.tipo==='mia'?'Mía':c.tipo==='compartida'?'Compartida':'Ajena'}</span></td>
+            <td class="td-mono">${fmt(c.total)}</td>
+            <td class="td-mono" style="color:var(--accent3);">${fmt(miParte)}</td>
+            <td style="font-size:12px;">${pagadas}/${cuotas} ${terminado?'✓':''}</td>
+            <td>${terminado?'<span class="badge badge-green">PAGADA</span>':'<span class="badge badge-blue">'+restantes+' rest.</span>'}</td>
+            <td>
+              <div style="display:flex;gap:4px;">
+                <button class="btn btn-ghost btn-sm" onclick="editCompra('${c.id}')">✎</button>
+                <button class="btn btn-ghost btn-sm delete-btn" onclick="deleteCompra('${c.id}')">✕</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>` :
+    '<div class="empty"><div class="empty-icon">🛒</div><p class="empty-text">No hay compras registradas</p></div>';
+
+  if (elId) document.getElementById(elId).innerHTML = html;
+  if (parentId) document.getElementById(parentId).innerHTML = html;
+}
+
+function populateTarjetaSelect() {
+  const sel = document.getElementById('compra_tarjeta');
+  const tarjetas = DB.tarjetas || [];
+  sel.innerHTML = '<option value="">Seleccioná tarjeta</option>' +
+    tarjetas.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+}
+
+async function guardarTarjeta() {
+  const id = document.getElementById('tarjeta_edit_id').value || genId();
+  const obj = {
+    id,
+    nombre: document.getElementById('tarjeta_nombre').value,
+    banco: document.getElementById('tarjeta_banco').value,
+    cierre: document.getElementById('tarjeta_cierre').value,
+    vencimiento: document.getElementById('tarjeta_vencimiento').value,
+    limite: document.getElementById('tarjeta_limite').value,
+  };
+  if (!obj.nombre) { toast('Ingresá el nombre de la tarjeta', 'warning'); return; }
+  await writeRow('tarjetas', id, obj);
+  toast('Tarjeta guardada ✓', 'success');
+  closeModal('modalTarjetaNueva');
+  document.getElementById('tarjeta_edit_id').value = '';
+  refreshTarjetas();
+}
+
+function editTarjeta(id) {
+  const t = DB.tarjetas.find(r => r.id === id);
+  if (!t) return;
+  document.getElementById('tarjeta_edit_id').value = t.id;
+  document.getElementById('tarjeta_nombre').value = t.nombre||'';
+  document.getElementById('tarjeta_banco').value = t.banco||'';
+  document.getElementById('tarjeta_cierre').value = t.cierre||'';
+  document.getElementById('tarjeta_vencimiento').value = t.vencimiento||'';
+  document.getElementById('tarjeta_limite').value = t.limite||'';
+  openModal('modalTarjetaNueva');
+}
+
+async function deleteTarjeta(id) {
+  if (!confirm('¿Eliminar esta tarjeta? También se eliminarán sus compras.')) return;
+  await deleteRow('tarjetas', id);
+  const comprasAjenas = (DB.compras||[]).filter(c => c.tarjeta_id === id);
+  for (const c of comprasAjenas) await deleteRow('compras', c.id);
+  toast('Tarjeta eliminada', 'success');
+  refreshTarjetas();
+}
+
+function toggleCompraTipo() {
+  const tipo = document.getElementById('compra_tipo').value;
+  document.getElementById('compra_compartida_pct').style.display = tipo === 'compartida' ? 'block' : 'none';
+  document.getElementById('compra_persona_wrap').style.display = tipo === 'mia' ? 'none' : 'block';
+}
+
+async function guardarCompra() {
+  const id = document.getElementById('compra_edit_id').value || genId();
+  const obj = {
+    id,
+    desc: document.getElementById('compra_desc').value,
+    tarjeta_id: document.getElementById('compra_tarjeta').value,
+    tipo: document.getElementById('compra_tipo').value,
+    persona: document.getElementById('compra_persona').value,
+    pct_yo: document.getElementById('compra_pct_yo').value || '50',
+    total: document.getElementById('compra_total').value,
+    cuotas: document.getElementById('compra_cuotas').value || '1',
+    cuotas_pagadas: document.getElementById('compra_cuotas_pagadas').value || '0',
+    fecha: document.getElementById('compra_fecha').value,
+    categoria: document.getElementById('compra_categoria').value,
+  };
+  if (!obj.desc || !obj.total) { toast('Completá descripción y monto', 'warning'); return; }
+  await writeRow('compras', id, obj);
+  toast('Compra guardada ✓', 'success');
+  closeModal('modalCompra');
+  document.getElementById('compra_edit_id').value = '';
+  refreshTarjetas();
+}
+
+function editCompra(id) {
+  const c = DB.compras.find(r => r.id === id);
+  if (!c) return;
+  document.getElementById('compra_edit_id').value = c.id;
+  document.getElementById('compra_desc').value = c.desc||'';
+  document.getElementById('compra_tarjeta').value = c.tarjeta_id||'';
+  document.getElementById('compra_tipo').value = c.tipo||'mia';
+  document.getElementById('compra_persona').value = c.persona||'';
+  document.getElementById('compra_pct_yo').value = c.pct_yo||'50';
+  document.getElementById('compra_total').value = c.total||'';
+  document.getElementById('compra_cuotas').value = c.cuotas||'1';
+  document.getElementById('compra_cuotas_pagadas').value = c.cuotas_pagadas||'0';
+  document.getElementById('compra_fecha').value = c.fecha||'';
+  document.getElementById('compra_categoria').value = c.categoria||'otro';
+  toggleCompraTipo();
+  document.getElementById('modalCompraTitulo').textContent = 'Editar Compra';
+  openModal('modalCompra');
+}
+
+async function deleteCompra(id) {
+  if (!confirm('¿Eliminar esta compra?')) return;
+  await deleteRow('compras', id);
+  toast('Compra eliminada', 'success');
+  refreshTarjetas();
+}
+
+// ============================================================
+// DEUDORES
+// ============================================================
+async function refreshDeudores() {
+  await readTabla('prestamos');
+  await readTabla('compras');
+  const deudores = calcDeudores();
+  const total = deudores.reduce((s,d) => s+d.total, 0);
+
+  document.getElementById('deudoresStats').innerHTML = `
+    <div class="card card-accent-yellow">
+      <div class="stat-label">Total que te deben</div>
+      <div class="stat-value yellow">${fmt(total)}</div>
+      <div class="stat-sub">Por mes</div>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="stat-label">Cantidad de deudores</div>
+      <div class="stat-value blue">${deudores.length}</div>
+      <div class="stat-sub">Personas</div>
+    </div>
+    <div class="card card-accent-green">
+      <div class="stat-label">Más grande</div>
+      <div class="stat-value green">${deudores.length ? fmt(Math.max(...deudores.map(d=>d.total))) : '$0'}</div>
+      <div class="stat-sub">${deudores.length ? deudores.sort((a,b)=>b.total-a.total)[0].nombre : '—'}</div>
+    </div>
+  `;
+
+  const el = document.getElementById('listaDeudores');
+  if (!deudores.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><p>Nadie te debe plata este mes</p></div>';
+    return;
+  }
+
+  el.innerHTML = `<div class="grid grid-2">` +
+    deudores.map(d => {
+      // Detalle de items
+      const itemsPrestamos = (DB.prestamos||[]).filter(p => p.cotitular === d.nombre && p.tipo === 'compartido');
+      const itemsCompras = (DB.compras||[]).filter(c => c.persona === d.nombre && (c.tipo === 'compartida' || c.tipo === 'ajena'));
+
+      return `<div class="deuda-card">
+        <div class="deuda-top">
+          <div>
+            <div class="deuda-nombre">👤 ${d.nombre}</div>
+            <div class="deuda-tipo">${d.items} concepto(s)</div>
+          </div>
+          <div class="deuda-monto" style="color:var(--accent3);">${fmt(d.total)}/mes</div>
+        </div>
+        <div class="sep" style="margin:8px 0;"></div>
+        ${itemsPrestamos.map(p => {
+          const cuotaTotal = parseFloat(p.cuota)/((100-(parseInt(p.pct_otro)||50))/100);
+          const parteOtro = cuotaTotal*((parseInt(p.pct_otro)||50)/100);
+          return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;">
+            <span>🏦 ${p.nombre}</span>
+            <span style="font-family:var(--mono);color:var(--accent3);">${fmt(parteOtro)}/mes</span>
+          </div>`;
+        }).join('')}
+        ${itemsCompras.map(c => {
+          const cuotas = parseInt(c.cuotas)||1;
+          const pagadas = parseInt(c.cuotas_pagadas)||0;
+          const cuotaM = parseFloat(c.total)/cuotas;
+          const parteOtro = c.tipo === 'compartida' ? cuotaM*((100-(parseInt(c.pct_yo)||50))/100) : cuotaM;
+          if (pagadas >= cuotas) return '';
+          return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;">
+            <span>💳 ${c.desc} (${pagadas}/${cuotas})</span>
+            <span style="font-family:var(--mono);color:var(--accent3);">${fmt(parteOtro)}/mes</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ============================================================
+// SUELDO
+// ============================================================
+async function refreshSueldo() {
+  await readTabla('ingresosFijos');
+  await readTabla('gastosFijos');
+  renderIngresosStats();
+  renderIngresosFijos();
+  renderGastosFijos();
+  renderResumenSueldo();
+}
+
+function ingresoTipoEmoji(tipo) {
+  const m = { sueldo:'💼', freelance:'💻', alquiler:'🏠', negocio:'🏪', otro:'💵' };
+  return m[tipo] || '💵';
+}
+
+function renderIngresosStats() {
+  const total = calcTotalIngresosFijos();
+  const cant = (DB.ingresosFijos||[]).length;
+  const totalGastos = calcTotalPrestamos() + calcTotalTarjetas() + calcTotalGastosFijos();
+  const diferencia = total - totalGastos;
+
+  document.getElementById('ingresosStats').innerHTML = `
+    <div class="card card-accent-green">
+      <div class="stat-label">Total ingresos fijos</div>
+      <div class="stat-value green">${fmt(total)}</div>
+      <div class="stat-sub">${cant} fuente${cant!==1?'s':''} de ingreso</div>
+    </div>
+    <div class="card card-accent-red">
+      <div class="stat-label">Total egresos fijos</div>
+      <div class="stat-value red">${fmt(totalGastos)}</div>
+      <div class="stat-sub">Préstamos + Tarjetas + Auto</div>
+    </div>
+    <div class="card ${diferencia>=0?'card-accent-green':'card-accent-red'}">
+      <div class="stat-label">${diferencia>=0?'Sobrante sin Uber':'Déficit sin Uber'}</div>
+      <div class="stat-value" style="color:${diferencia>=0?'var(--accent)':'var(--danger)'};">${fmt(diferencia)}</div>
+      <div class="stat-sub">${diferencia>=0?'Ya cubrís todo con el sueldo':'Necesitás completar con Uber'}</div>
+    </div>
+  `;
+}
+
+function renderIngresosFijos() {
+  const el = document.getElementById('listaIngresosFijos');
+  const ingresos = DB.ingresosFijos || [];
+
+  if (!ingresos.length) {
+    el.innerHTML = `
+      <div class="empty" style="padding:20px;">
+        <div class="empty-icon" style="font-size:28px;">💼</div>
+        <p class="empty-text">No hay ingresos fijos.<br>Agregá tu sueldo o cualquier ingreso mensual.</p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = ingresos.map(i => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:700;">${ingresoTipoEmoji(i.tipo)} ${i.desc}</div>
+        <div class="hint">Cobro: día ${i.dia||'—'} · ${i.tipo||'otro'}</div>
+        ${i.notas ? `<div class="hint" style="color:var(--text3);">${i.notas}</div>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="text-align:right;">
+          <div style="font-family:var(--mono);font-weight:700;font-size:16px;color:var(--accent);">${fmt(i.monto)}</div>
+          <div class="hint">por mes</div>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" onclick="editIngresoFijo('${i.id}')">✎</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteIngresoFijo('${i.id}')">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderGastosFijos() {
+  const el = document.getElementById('listaGastosFijos');
+  const gastos = DB.gastosFijos || [];
+  if (!gastos.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px;"><p class="empty-text">No hay gastos fijos del auto</p></div>';
+    return;
+  }
+  el.innerHTML = gastos.map(g => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:600;">${categEmoji(g.tipo)} ${g.desc}</div>
+        <div class="hint">Día ${g.dia} de cada mes</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-family:var(--mono);font-weight:700;">${fmt(g.monto)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="deleteGastoFijo('${g.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderResumenSueldo() {
+  const ingresos = DB.ingresosFijos || [];
+  const totalFijos = calcTotalIngresosFijos();
+  const prestamos = calcTotalPrestamos();
+  const tarjetas = calcTotalTarjetas();
+  const fijosAuto = calcTotalGastosFijos();
+  const totalGastos = prestamos + tarjetas + fijosAuto;
+  const libre = totalFijos - totalGastos;
+
+  const uberMes = calcUberMes();
+  const conUber = totalFijos + uberMes - totalGastos;
+
+  document.getElementById('resumenSueldo').innerHTML = `
+    <div style="margin-bottom:20px;">
+      ${ingresos.length ? ingresos.map(i => `
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(42,42,58,0.5);">
+          <span style="font-size:13px;">${ingresoTipoEmoji(i.tipo)} ${i.desc}</span>
+          <span style="font-family:var(--mono);color:var(--accent);">${fmt(i.monto)}</span>
+        </div>
+      `).join('') : `<div style="color:var(--text3);font-size:13px;padding:8px 0;">Sin ingresos fijos cargados</div>`}
+      <div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;">
+        <span>Total ingresos fijos</span>
+        <span style="font-family:var(--mono);color:var(--accent);font-size:16px;">${fmt(totalFijos)}</span>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div style="margin:16px 0;">
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;">
+        <span>🏦 Préstamos</span>
+        <span style="font-family:var(--mono);color:var(--accent4);">${fmt(prestamos)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;">
+        <span>💳 Tarjetas</span>
+        <span style="font-family:var(--mono);color:var(--purple);">${fmt(tarjetas)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;">
+        <span>🚗 Gastos fijos auto</span>
+        <span style="font-family:var(--mono);color:var(--accent3);">${fmt(fijosAuto)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;border-top:1px solid var(--border);margin-top:4px;">
+        <span>Total egresos fijos</span>
+        <span style="font-family:var(--mono);color:var(--accent2);font-size:16px;">${fmt(totalGastos)}</span>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+      <div>
+        <div style="font-size:14px;font-weight:700;">Solo con ingresos fijos</div>
+        <div class="hint">${libre>=0?'Cubrís todo, Uber es ganancia extra':'Necesitás complementar con Uber'}</div>
+      </div>
+      <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:${libre>=0?'var(--accent)':'var(--danger)'};">${fmt(libre)}</span>
+    </div>
+    ${uberMes > 0 ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;background:rgba(0,229,160,0.05);border-radius:var(--radius-sm);padding:12px;margin-top:8px;">
+      <div>
+        <div style="font-size:13px;font-weight:700;">Con Uber incluido (este mes)</div>
+        <div class="hint">Uber neto acumulado: ${fmt(uberMes)}</div>
+      </div>
+      <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:${conUber>=0?'var(--accent)':'var(--danger)'};">${fmt(conUber)}</span>
+    </div>` : ''}
+    ${libre < 0 ? `<div class="alert alert-danger" style="margin-top:16px;">⚠️ Tus ingresos fijos no alcanzan. Necesitás juntar ${fmt(Math.abs(libre))} con Uber u otros ingresos variables.</div>` : ''}
+  `;
+}
+
+async function guardarIngresoFijo() {
+  const id = document.getElementById('ingreso_edit_id').value || genId();
+  const obj = {
+    id,
+    desc: document.getElementById('ingreso_desc').value,
+    monto: document.getElementById('ingreso_monto').value,
+    dia: document.getElementById('ingreso_dia').value,
+    tipo: document.getElementById('ingreso_tipo').value,
+    notas: document.getElementById('ingreso_notas').value,
+  };
+  if (!obj.desc || !obj.monto) { toast('Completá descripción y monto', 'warning'); return; }
+  await writeRow('ingresosFijos', id, obj);
+  toast('Ingreso guardado ✓', 'success');
+  closeModal('modalIngresoFijo');
+  document.getElementById('ingreso_edit_id').value = '';
+  ['ingreso_desc','ingreso_monto','ingreso_dia','ingreso_notas'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('modalIngresoTitulo').textContent = 'Nuevo Ingreso Fijo';
+  refreshSueldo();
+}
+
+function editIngresoFijo(id) {
+  const i = (DB.ingresosFijos||[]).find(r => r.id === id);
+  if (!i) return;
+  document.getElementById('ingreso_edit_id').value = i.id;
+  document.getElementById('ingreso_desc').value = i.desc||'';
+  document.getElementById('ingreso_monto').value = i.monto||'';
+  document.getElementById('ingreso_dia').value = i.dia||'';
+  document.getElementById('ingreso_tipo').value = i.tipo||'sueldo';
+  document.getElementById('ingreso_notas').value = i.notas||'';
+  document.getElementById('modalIngresoTitulo').textContent = 'Editar Ingreso Fijo';
+  openModal('modalIngresoFijo');
+}
+
+async function deleteIngresoFijo(id) {
+  if (!confirm('¿Eliminar este ingreso?')) return;
+  await deleteRow('ingresosFijos', id);
+  toast('Eliminado', 'success');
+  refreshSueldo();
+}
+
+async function guardarSueldo() {
+  // legacy — mantenido por compatibilidad
+  CONFIG.sueldo = parseFloat(document.getElementById('sueldoMensual')?.value) || 0;
+  CONFIG.sueldoDia = parseInt(document.getElementById('sueldoDia')?.value) || 1;
+  await writeRow('config', 'main', { id:'main', sueldo: CONFIG.sueldo, sueldoDia: CONFIG.sueldoDia });
+  toast('Guardado ✓', 'success');
+  renderResumenSueldo();
+}
+
+async function guardarGastoFijo() {
+  const id = genId();
+  const obj = {
+    id,
+    desc: document.getElementById('gasto_desc').value,
+    monto: document.getElementById('gasto_monto').value,
+    dia: document.getElementById('gasto_dia').value,
+    tipo: document.getElementById('gasto_tipo').value,
+  };
+  if (!obj.desc || !obj.monto) { toast('Completá todos los campos', 'warning'); return; }
+  await writeRow('gastosFijos', id, obj);
+  toast('Gasto fijo guardado ✓', 'success');
+  closeModal('modalGastoFijo');
+  ['gasto_desc','gasto_monto','gasto_dia'].forEach(id => document.getElementById(id).value = '');
+  refreshSueldo();
+}
+
+async function deleteGastoFijo(id) {
+  if (!confirm('¿Eliminar este gasto fijo?')) return;
+  await deleteRow('gastosFijos', id);
+  toast('Eliminado', 'success');
+  refreshSueldo();
+}
+
+// ============================================================
+// UBER
+// ============================================================
+async function refreshUber() {
+  await readTabla('uber');
+  await readTabla('ingresosFijos');
+  await readTabla('prestamos');
+  await readTabla('tarjetas');
+  await readTabla('gastosFijos');
+
+  const today = new Date();
+  const mes = today.getMonth();
+  const anio = today.getFullYear();
+  const diasMes = new Date(anio, mes + 1, 0).getDate();
+  const diaHoy = today.getDate();
+  const diasRestantes = Math.max(diasMes - diaHoy, 1);
+  const diasPasados = diaHoy;
+
+  const delMes = (DB.uber||[]).filter(u => {
+    if (!u) return false;
+    const d = new Date(u.fecha + 'T00:00:00');
+    return d.getMonth() === mes && d.getFullYear() === anio;
+  });
+
+  const totalBruto = delMes.reduce((s,u) => s+(parseFloat(u.monto)||0), 0);
+  const totalGastosUber = delMes.reduce((s,u) => s+(parseFloat(u.gastos)||0), 0);
+  const totalNeto = totalBruto - totalGastosUber;
+  const diasTrabajados = delMes.length;
+  const promDiario = diasTrabajados ? totalNeto / diasTrabajados : 0;
+
+  // CÁLCULO OBJETIVO: cuánto necesito de Uber
+  const ingresosFijos = calcTotalIngresosFijos();
+  const totalGastos = calcTotalPrestamos() + calcTotalTarjetas() + calcTotalGastosFijos();
+  const deficit = Math.max(totalGastos - ingresosFijos, 0);
+  const uberNecesarioMes = deficit; // cuánto tiene que aportar Uber en total en el mes
+  const uberFaltante = Math.max(uberNecesarioMes - totalNeto, 0); // lo que falta juntar todavía
+  const metaDiaria = uberFaltante > 0 ? uberFaltante / diasRestantes : 0;
+  const progPct = uberNecesarioMes > 0 ? Math.min((totalNeto / uberNecesarioMes) * 100, 100) : 100;
+
+  // ---- META HERO CARD ----
+  const metaCard = document.getElementById('uberMetaCard');
+  if (deficit === 0) {
+    metaCard.innerHTML = `
+      <div class="card" style="background:linear-gradient(135deg,rgba(0,229,160,0.1),rgba(107,203,255,0.05));border-color:rgba(0,229,160,0.3);">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="font-size:40px;">✅</div>
+          <div>
+            <div style="font-size:20px;font-weight:800;color:var(--accent);">Tus ingresos fijos cubren todo</div>
+            <div style="color:var(--text2);font-size:13px;margin-top:4px;">Todo lo que generés con Uber este mes es ganancia neta extra. ¡Seguí así!</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div class="stat-label">Uber acumulado</div>
+            <div style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--accent);">${fmt(totalNeto)}</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    const statusColor = metaDiaria === 0 ? 'var(--accent)' : promDiario >= metaDiaria ? 'var(--accent)' : promDiario >= metaDiaria * 0.7 ? 'var(--accent3)' : 'var(--danger)';
+    const statusIcon = promDiario >= metaDiaria ? '🟢' : promDiario >= metaDiaria * 0.7 ? '🟡' : '🔴';
+    const statusLabel = promDiario >= metaDiaria ? 'Estás llegando a la meta' : promDiario >= metaDiaria * 0.7 ? 'Cerca, pero podés mejorar' : 'Por debajo de la meta';
+
+    metaCard.innerHTML = `
+      <div class="card" style="background:linear-gradient(135deg,rgba(255,217,61,0.06),rgba(255,107,107,0.04));border-color:rgba(255,217,61,0.25);">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div class="stat-label">Meta diaria mínima con Uber</div>
+            <div style="font-family:var(--mono);font-size:48px;font-weight:800;color:var(--accent3);letter-spacing:-3px;line-height:1;">${fmt(metaDiaria)}</div>
+            <div style="font-size:13px;color:var(--text2);margin-top:6px;">por día durante los próximos <strong style="color:var(--text);">${diasRestantes} días</strong> restantes del mes</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;min-width:200px;">
+            <div>
+              <div class="stat-label">Déficit mensual</div>
+              <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent2);">${fmt(uberNecesarioMes)}</div>
+              <div class="hint">Lo que Uber debe cubrir en total</div>
+            </div>
+            <div>
+              <div class="stat-label">Ya juntaste</div>
+              <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);">${fmt(totalNeto)}</div>
+              <div class="hint">Uber neto este mes</div>
+            </div>
+            <div>
+              <div class="stat-label">Todavía falta</div>
+              <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${uberFaltante>0?'var(--accent2)':'var(--accent)'};">${fmt(uberFaltante)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;font-weight:700;">${statusIcon} ${statusLabel}</span>
+            <span style="font-family:var(--mono);font-size:12px;color:var(--text2);">${Math.round(progPct)}% del objetivo</span>
+          </div>
+          <div class="progress-bar" style="height:10px;">
+            <div class="progress-fill" style="width:${progPct}%;background:${statusColor};transition:width 0.8s ease;"></div>
+          </div>
+          ${promDiario > 0 ? `
+          <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--text3);">Promedio real: <strong style="color:${statusColor};font-family:var(--mono);">${fmt(promDiario)}/día</strong></span>
+            <span style="font-size:12px;color:var(--text3);">Meta: <strong style="font-family:var(--mono);">${fmt(metaDiaria)}/día</strong></span>
+            ${promDiario >= metaDiaria
+              ? `<span style="font-size:12px;color:var(--accent);">✓ Si mantenés este ritmo, llegás a fin de mes</span>`
+              : `<span style="font-size:12px;color:var(--accent2);">Necesitás trabajar ${fmt(metaDiaria - promDiario)} más por día</span>`}
+          </div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // ---- STATS ----
+  const proyeccionMes = diasTrabajados > 0 ? (totalNeto / diasTrabajados) * diasMes : 0;
+  document.getElementById('uberStats').innerHTML = `
+    <div class="card card-accent-green">
+      <div class="stat-label">Neto este mes</div>
+      <div class="stat-value green">${fmt(totalNeto)}</div>
+      <div class="stat-sub">Bruto ${fmt(totalBruto)} − Gastos ${fmt(totalGastosUber)}</div>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="stat-label">Días trabajados</div>
+      <div class="stat-value blue">${diasTrabajados}</div>
+      <div class="stat-sub">de ${diasPasados} días transcurridos</div>
+    </div>
+    <div class="card card-accent-yellow">
+      <div class="stat-label">Promedio diario real</div>
+      <div class="stat-value yellow">${fmt(promDiario)}</div>
+      <div class="stat-sub">Neto por día trabajado</div>
+    </div>
+    <div class="card card-accent-purple" style="border-left-color:var(--purple)">
+      <div class="stat-label">Proyección del mes</div>
+      <div class="stat-value" style="color:var(--purple);">${fmt(proyeccionMes)}</div>
+      <div class="stat-sub">Si seguís al mismo ritmo</div>
+    </div>
+  `;
+
+  // ---- PROGRESO SEMANA ----
+  const progresoCard = document.getElementById('uberProgresoCard');
+  if (delMes.length > 0) {
+    // Últimos 7 registros como mini-chart de barras
+    const ultimos = [...delMes].sort((a,b) => new Date(a.fecha) - new Date(b.fecha)).slice(-10);
+    const maxNeto = Math.max(...ultimos.map(u => (parseFloat(u.monto)||0) - (parseFloat(u.gastos)||0)), 1);
+    progresoCard.innerHTML = `
+      <div class="section-title">Últimos días trabajados</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:70px;margin-bottom:8px;">
+        ${ultimos.map(u => {
+          const neto = (parseFloat(u.monto)||0) - (parseFloat(u.gastos)||0);
+          const pct = Math.round((neto/maxNeto)*100);
+          const color = neto >= metaDiaria ? 'var(--accent)' : neto >= metaDiaria*0.7 ? 'var(--accent3)' : 'var(--accent2)';
+          const fecha = new Date(u.fecha + 'T00:00:00');
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">${fmt(neto).replace('$','')}</div>
+            <div style="width:100%;background:${color};border-radius:3px 3px 0 0;height:${pct}%;min-height:4px;transition:height 0.5s;"></div>
+            <div style="font-size:9px;color:var(--text3);">${fecha.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${metaDiaria > 0 ? `<div class="hint" style="color:var(--text3);">🟢 por encima de la meta · 🟡 cerca · 🔴 por debajo de ${fmt(metaDiaria)}/día</div>` : ''}
+    `;
+  } else {
+    progresoCard.innerHTML = '';
+  }
+
+  // ---- TABLA HISTORIAL ----
+  const sorted = [...(DB.uber||[])].filter(Boolean).sort((a,b) => new Date(b.fecha)-new Date(a.fecha));
+  const el = document.getElementById('listaUber');
+
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🚗</div><p>No hay registros de Uber. Registrá tu primer día.</p></div>';
+    return;
+  }
+
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Fecha</th><th>Ganancias</th><th>Gastos</th><th>Neto</th><th>Horas</th><th>$/hora</th>
+      <th>vs Meta</th><th>Notas</th><th></th>
+    </tr></thead>
+    <tbody>
+      ${sorted.map(u => {
+        const neto = (parseFloat(u.monto)||0) - (parseFloat(u.gastos)||0);
+        const horas = parseFloat(u.horas)||0;
+        const porHora = horas ? neto/horas : 0;
+        const fecha = new Date(u.fecha + 'T00:00:00');
+        const vsMeta = metaDiaria > 0 ? neto - metaDiaria : null;
+        return `<tr>
+          <td class="td-mono">${fecha.toLocaleDateString('es-AR',{weekday:'short',day:'2-digit',month:'2-digit'})}</td>
+          <td class="td-mono" style="color:var(--accent);">${fmt(u.monto)}</td>
+          <td class="td-mono" style="color:var(--accent2);">${parseFloat(u.gastos||0)?fmt(u.gastos):'—'}</td>
+          <td class="td-mono td-bold" style="color:var(--accent3);">${fmt(neto)}</td>
+          <td style="color:var(--text2);font-size:12px;">${horas||'—'}h</td>
+          <td class="td-mono" style="font-size:11px;">${porHora?fmt(porHora):'—'}</td>
+          <td style="font-size:12px;">
+            ${vsMeta !== null
+              ? `<span style="color:${vsMeta>=0?'var(--accent)':'var(--danger)'};font-family:var(--mono);">${vsMeta>=0?'+':''}${fmt(vsMeta)}</span>`
+              : '<span style="color:var(--text3);">—</span>'}
+          </td>
+          <td style="color:var(--text3);font-size:12px;">${u.notas||'—'}</td>
+          <td><button class="btn btn-ghost btn-sm delete-btn" onclick="deleteUber('${u.id}')">✕</button></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+async function guardarUber() {
+  const id = genId();
+  const obj = {
+    id,
+    fecha: document.getElementById('uber_fecha').value,
+    monto: document.getElementById('uber_monto').value,
+    gastos: document.getElementById('uber_gastos').value || '0',
+    horas: document.getElementById('uber_horas').value || '0',
+    notas: document.getElementById('uber_notas').value,
+  };
+  if (!obj.fecha || !obj.monto) { toast('Completá fecha y monto', 'warning'); return; }
+  await writeRow('uber', id, obj);
+  toast('Registrado ✓', 'success');
+  closeModal('modalUber');
+  ['uber_monto','uber_gastos','uber_horas','uber_notas'].forEach(i => document.getElementById(i).value = '');
+  refreshUber();
+}
+
+async function deleteUber(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  await deleteRow('uber', id);
+  toast('Eliminado', 'success');
+  refreshUber();
+}
+
+// ============================================================
+// ANÁLISIS IA
+// ============================================================
+async function generarAnalisis() {
+  const el = document.getElementById('analisisContent');
+  el.innerHTML = '<div class="loading" style="padding:60px;"><div class="spinner"></div> Analizando tu situación...</div>';
+
+  await new Promise(r => setTimeout(r, 800)); // UX delay
+
+  const sueldo = calcTotalIngresosFijos();
+  const tarjetas = calcTotalTarjetas();
+  const fijos = calcTotalGastosFijos();
+  const totalGastos = prestamos + tarjetas + fijos;
+  const uberMes = calcUberMes();
+  const ingresos = sueldo + uberMes;
+  const balance = ingresos - totalGastos;
+  const deudores = calcDeudores();
+  const totalMeDeben = deudores.reduce((s,d) => s+d.total, 0);
+
+  const today = new Date();
+  const diasMes = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const diasRestantes = Math.max(diasMes - today.getDate(), 1);
+  const metaDiaria = balance < 0 ? Math.abs(balance) / diasRestantes : 0;
+
+  const tips = [];
+
+  if (balance < 0) {
+    tips.push({
+      icon: '🚨',
+      color: 'var(--danger)',
+      titulo: 'Déficit mensual detectado',
+      texto: `Tu sueldo (${fmt(sueldo)}) no cubre todos tus gastos (${fmt(totalGastos)}). Tenés un déficit de ${fmt(Math.abs(balance))} por mes. Necesitás generar al menos ${fmt(metaDiaria)} diarios con Uber para cubrir todo.`
+    });
+  } else {
+    tips.push({
+      icon: '✅',
+      color: 'var(--accent)',
+      titulo: 'Sueldo cubre los gastos',
+      texto: `Tu sueldo cubre tus gastos fijos. Te sobran ${fmt(balance)} por mes. Usá ese sobrante para adelantar cuotas o armar un fondo de emergencia.`
+    });
+  }
+
+  if (tarjetas > sueldo * 0.3) {
+    tips.push({
+      icon: '💳',
+      color: 'var(--purple)',
+      titulo: 'Tarjetas: alto porcentaje del ingreso',
+      texto: `Las cuotas de tarjetas representan ${Math.round(tarjetas/sueldo*100)}% de tu sueldo (${fmt(tarjetas)}). Lo recomendable es no superar el 30%. Intentá no sumar más compras en cuotas hasta reducir la deuda actual.`
+    });
+  }
+
+  if (prestamos > sueldo * 0.4) {
+    tips.push({
+      icon: '🏦',
+      color: 'var(--accent4)',
+      titulo: 'Préstamos: peso importante',
+      texto: `Los préstamos representan ${Math.round(prestamos/sueldo*100)}% de tu sueldo mensual (${fmt(prestamos)}). Si podés, priorizá los préstamos con mayor tasa de interés para cancelarlos antes.`
+    });
+  }
+
+  if (totalMeDeben > 0) {
+    tips.push({
+      icon: '👥',
+      color: 'var(--accent3)',
+      titulo: 'Recordá cobrar lo que te deben',
+      texto: `Te están debiendo ${fmt(totalMeDeben)} por mes entre ${deudores.length} persona(s). Cobrarlo puntualmente puede mejorar significativamente tu situación. ${deudores.map(d=>d.nombre+': '+fmt(d.total)).join(', ')}.`
+    });
+  }
+
+  if (fijos > 0) {
+    tips.push({
+      icon: '🚗',
+      color: 'var(--accent3)',
+      titulo: 'Gastos del auto vs ingresos Uber',
+      texto: `Gastás ${fmt(fijos)}/mes en mantener el auto. Con Uber generás ${fmt(uberMes)} este mes. ${uberMes > fijos ? `El auto genera ${fmt(uberMes-fijos)} de ganancia neta. ¡Bien!` : `El auto cuesta más de lo que generás con Uber por ahora. Intentá aumentar las horas de manejo.`}`
+    });
+  }
+
+  // Plan de acción
+  const pagos = getAllPagos().sort((a,b) => a.dias - b.dias).slice(0,5);
+
+  el.innerHTML = `
+    <div class="grid grid-3" style="margin-bottom:24px;">
+      <div class="card card-accent-green">
+        <div class="stat-label">Ingresos totales</div>
+        <div class="stat-value green" style="font-size:22px;">${fmt(ingresos)}</div>
+      </div>
+      <div class="card card-accent-red">
+        <div class="stat-label">Gastos totales</div>
+        <div class="stat-value red" style="font-size:22px;">${fmt(totalGastos)}</div>
+      </div>
+      <div class="card ${balance>=0?'card-accent-green':'card-accent-red'}">
+        <div class="stat-label">Balance</div>
+        <div class="stat-value" style="font-size:22px;color:${balance>=0?'var(--accent)':'var(--danger)'};">${fmt(balance)}</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:16px;">Análisis y recomendaciones</div>
+
+    ${tips.map(t => `
+      <div class="advisor-card" style="border-color:${t.color}22;background:${t.color}08;">
+        <div class="advisor-icon">${t.icon}</div>
+        <div class="advisor-title" style="color:${t.color};">${t.titulo}</div>
+        <div class="advisor-text">${t.texto}</div>
+      </div>
+    `).join('')}
+
+    ${metaDiaria > 0 ? `
+    <div class="card card-accent-yellow" style="margin-top:16px;">
+      <div class="section-title">Meta diaria Uber recomendada</div>
+      <div style="text-align:center;padding:16px 0;">
+        <div class="big-number" style="color:var(--accent3);">${fmt(metaDiaria)}</div>
+        <div class="stat-sub" style="margin-top:8px;">por día durante los próximos ${diasRestantes} días para cubrir el déficit</div>
+      </div>
+    </div>` : ''}
+
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Próximos 5 pagos prioritarios</div>
+      ${pagos.length ? pagos.map((p,i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:8px;">#${i+1}</span>
+            <span style="font-weight:700;">${p.nombre}</span>
+            <span style="font-size:11px;color:var(--text3);margin-left:8px;">${p.tipo}</span>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--mono);font-weight:700;">${fmt(p.monto)}</div>
+            <div class="hint">${p.dias===0?'¡HOY!':p.dias+' días'}</div>
+          </div>
+        </div>
+      `).join('') : '<div class="empty"><p>No hay pagos registrados</p></div>'}
+    </div>
+  `;
+}
+
+// ============================================================
+// MODALS & MISC
+// ============================================================
+function exportarDatos() {
+  const data = JSON.stringify({ DB }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'fincontrol_backup.json';
+  a.click();
+  toast('Backup descargado ✓', 'success');
+}
+
+function limpiarTodo() {
+  if (!confirm('¿BORRAR TODOS LOS DATOS DE GOOGLE SHEETS? Esta acción no se puede deshacer.')) return;
+  // No borramos Sheets directamente — solo el caché local
+  DB = { prestamos:[], tarjetas:[], compras:[], gastosFijos:[], uber:[], ingresosFijos:[], config:[] };
+  toast('Caché local limpio. Los datos en Sheets no se modificaron.', 'warning');
+  refreshDashboard();
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg, type = 'success') {
+  const tc = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `${type==='success'?'✓':type==='error'?'✕':'⚠'} ${msg}`;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ESC to close modals and drawer
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    closeDrawer();
+  }
+});
+
+// Swipe left to close drawer on mobile
+(function() {
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (dx < -60) closeDrawer(); // swipe left
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>
