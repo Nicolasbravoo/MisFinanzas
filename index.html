@@ -1043,9 +1043,210 @@
     color: var(--accent3);
     line-height: 1.6;
   }
+  /* ============================================================
+     LOGIN SCREEN
+  ============================================================ */
+  .login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+    padding: 24px;
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+
+  .login-logo {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+
+  .login-sub {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+
+  .pin-dots {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .pin-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  .pin-dot.filled {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.1);
+  }
+
+  .pin-dot.error {
+    background: var(--danger);
+    border-color: var(--danger);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .pin-key {
+    aspect-ratio: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 20px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .pin-key:hover { background: #252535; border-color: var(--text3); }
+  .pin-key:active { transform: scale(0.94); background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .pin-key.del { font-size: 18px; color: var(--text2); }
+  .pin-key.empty { background: transparent; border-color: transparent; cursor: default; pointer-events: none; }
+
+  .login-error {
+    font-size: 12px;
+    color: var(--danger);
+    font-family: var(--mono);
+    height: 18px;
+    margin-bottom: 8px;
+  }
+
+  .login-set-pin {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 16px;
+    cursor: pointer;
+    font-family: var(--mono);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* OFFLINE BANNER */
+  .offline-banner {
+    display: none;
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--warning);
+    color: #000;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 700;
+    z-index: 500;
+    white-space: nowrap;
+  }
+
+  .offline-banner.visible { display: flex; align-items: center; gap: 6px; }
+
+  @media (max-width: 600px) {
+    .login-box { padding: 28px 20px; }
+    .pin-key { font-size: 18px; }
+    .offline-banner { bottom: 80px; }
+  }
+
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">💼</div>
+    <div class="login-title">FinControl</div>
+    <div class="login-sub" id="loginSubtitle">Ingresá tu PIN</div>
+
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="dot0"></div>
+      <div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div>
+      <div class="pin-dot" id="dot3"></div>
+    </div>
+
+    <div class="login-error" id="loginError"></div>
+
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key del" onclick="pinDelete()">⌫</button>
+    </div>
+
+    <div class="login-set-pin" id="loginSetPinLink" onclick="startSetPin()" style="display:none;">
+      Cambiar PIN
+    </div>
+  </div>
+</div>
+
+<!-- OFFLINE BANNER -->
+<div class="offline-banner" id="offlineBanner">
+  <span>📵</span> Sin conexión — mostrando datos guardados
+</div>
 
 <!-- MAIN APP -->
 <div class="app" id="mainApp">
@@ -1095,10 +1296,11 @@
       </div>
     </nav>
     <div class="sidebar-footer">
-      <div class="sheet-status">
+      <div class="sheet-status" style="margin-bottom:10px;">
         <div class="status-dot" id="sidebarStatusDot"></div>
         <span id="sidebarStatusText">Verificando...</span>
       </div>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarSesion()" style="width:100%;justify-content:center;">🔒 Cerrar sesión</button>
     </div>
   </aside>
 
@@ -1436,7 +1638,9 @@
             </div>
             <div style="display:flex;flex-direction:column;gap:8px;">
               <button class="btn btn-ghost" onclick="exportarDatos()">📤 Exportar datos (JSON)</button>
-              <button class="btn btn-danger" onclick="limpiarTodo()" style="margin-top:4px;">🗑️ Limpiar todos los datos</button>
+              <button class="btn btn-ghost" onclick="startSetPin()" style="margin-top:4px;">🔑 Cambiar PIN</button>
+              <button class="btn btn-ghost" onclick="cerrarSesion()" style="margin-top:4px;">🔒 Cerrar sesión</button>
+              <button class="btn btn-danger" onclick="limpiarTodo()" style="margin-top:4px;">🗑️ Limpiar caché local</button>
             </div>
           </div>
         </div>
@@ -1496,10 +1700,11 @@
     <div class="nav-item" onclick="navigateTo('config');closeDrawer()"><span class="icon">⚙️</span> Configuración</div>
   </nav>
   <div style="padding:14px 16px;border-top:1px solid var(--border);">
-    <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--text3);">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:10px;">
       <div class="status-dot" id="drawerStatusDot"></div>
       <span id="drawerStatusText">Verificando...</span>
     </div>
+    <button class="btn btn-ghost btn-sm" onclick="cerrarSesion()" style="width:100%;justify-content:center;">🔒 Cerrar sesión</button>
   </div>
 </div>
 
@@ -1873,10 +2078,11 @@
 
 <script>
 // ============================================================
-// ============================================================
 // STATE & CONFIG — PRODUCCIÓN
 // ============================================================
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwdHEyuVjji1Nab8JVSLk6JIaQt0hVOuw2g5Ec86rsUmBAmTfm9DRWYLmdpIIiwA2p0/exec';
+const SHEET_URL   = 'https://script.google.com/macros/s/AKfycby-AXByfriM0A8EXCxQ-820qXpiDDGS4mudNbOWNx_w7T6cxhNxWkIE7PR_yE2x8HHf/exec';
+const PIN_KEY     = 'fc_pin';
+const CACHE_KEY   = 'fc_db_cache';
 
 let CONFIG = {
   sheetUrl: SHEET_URL,
@@ -1885,7 +2091,6 @@ let CONFIG = {
   modo: 'sheets'
 };
 
-// In-memory DB (caché local — fuente de verdad siempre es Sheets)
 let DB = {
   prestamos: [],
   tarjetas: [],
@@ -1897,6 +2102,7 @@ let DB = {
 };
 
 let currentPage = 'dashboard';
+let isOnline = navigator.onLine;
 
 // ============================================================
 // INIT
@@ -1906,18 +2112,217 @@ window.addEventListener('load', async () => {
   document.getElementById('uber_fecha').value = today;
   document.getElementById('compra_fecha').value = today;
 
-  // Mostrar app de inmediato, conectar en background
-  showApp();
-  await syncAll();
+  // Cargar caché local inmediatamente (datos offline)
+  loadCache();
+
+  // Mostrar login
+  showLogin();
+
+  // Listeners de conectividad
+  window.addEventListener('online',  () => { isOnline = true;  updateOfflineBanner(); syncAll(); });
+  window.addEventListener('offline', () => { isOnline = false; updateOfflineBanner(); });
+  updateOfflineBanner();
 });
 
+// ============================================================
+// LOGIN
+// ============================================================
+async function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginSubtitle').textContent = 'Verificando...';
+  document.getElementById('loginSetPinLink').style.display = 'none';
+  resetPinInput(false);
+
+  // Intentar bajar PIN del Sheet (fuente de verdad)
+  try {
+    const res = await sheetRequest({ action: 'read', tabla: 'auth' });
+    const row = (res.data || []).find(r => r.id === 'pin');
+    if (row && row.pin) {
+      // PIN existe en Sheet → guardarlo en localStorage como caché
+      localStorage.setItem(PIN_KEY, row.pin);
+      document.getElementById('loginSubtitle').textContent = 'Ingresá tu PIN';
+      document.getElementById('loginSetPinLink').style.display = 'block';
+      resetPinInput(false);
+      pinMode = 'login';
+    } else {
+      // No hay PIN en Sheet → crear uno nuevo
+      startSetPin();
+    }
+  } catch(e) {
+    // Sin conexión → usar localStorage como fallback
+    const local = localStorage.getItem(PIN_KEY);
+    if (local) {
+      document.getElementById('loginSubtitle').textContent = 'Ingresá tu PIN (offline)';
+      document.getElementById('loginSetPinLink').style.display = 'block';
+      resetPinInput(false);
+      pinMode = 'login';
+    } else {
+      // Sin conexión y sin PIN local → no se puede validar
+      document.getElementById('loginSubtitle').textContent = 'Sin conexión';
+      document.getElementById('loginError').textContent = 'Necesitás conexión para el primer ingreso';
+    }
+  }
+}
+
+
 function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'flex';
   const urlInput = document.getElementById('configSheetUrl');
   if (urlInput) urlInput.value = SHEET_URL;
-  updateStatusUI(false); // se actualiza en syncAll
+  updateStatusUI(false);
   navigateTo('dashboard');
+  syncAll();
 }
+
+function cerrarSesion() {
+  document.getElementById('mainApp').style.display = 'none';
+  showLogin();
+}
+
+// ============================================================
+// PIN
+// ============================================================
+let pinBuffer = '';
+let pinMode   = 'login';  // 'login' | 'set1' | 'set2'
+let pinFirst  = '';
+
+function resetPinInput(clearError = true) {
+  pinBuffer = '';
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('dot' + i);
+    if (d) d.className = 'pin-dot';
+  }
+  if (clearError) document.getElementById('loginError').textContent = '';
+}
+
+function updateDots() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('dot' + i);
+    if (!d) continue;
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  }
+}
+
+function pinPress(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updateDots();
+  if (pinBuffer.length === 4) setTimeout(handlePinComplete, 150);
+}
+
+function pinDelete() {
+  if (pinBuffer.length > 0) {
+    pinBuffer = pinBuffer.slice(0, -1);
+    updateDots();
+  }
+}
+
+function handlePinComplete() {
+  if (pinMode === 'login') {
+    // Validar contra localStorage (que fue bajado del Sheet al iniciar)
+    const stored = localStorage.getItem(PIN_KEY);
+    if (pinBuffer === stored) {
+      document.getElementById('loginError').textContent = '';
+      showApp();
+    } else {
+      for (let i = 0; i < 4; i++) {
+        const d = document.getElementById('dot' + i);
+        if (d) d.className = 'pin-dot error';
+      }
+      document.getElementById('loginError').textContent = 'PIN incorrecto';
+      setTimeout(() => resetPinInput(true), 800);
+    }
+
+  } else if (pinMode === 'set1') {
+    pinFirst = pinBuffer;
+    document.getElementById('loginSubtitle').textContent = 'Confirmá el PIN';
+    document.getElementById('loginError').textContent = '';
+    resetPinInput(false);
+    pinMode = 'set2';
+
+  } else if (pinMode === 'set2') {
+    if (pinBuffer === pinFirst) {
+      // Guardar en localStorage
+      localStorage.setItem(PIN_KEY, pinBuffer);
+      // Guardar en Sheet (fuente de verdad)
+      sheetRequest({
+        action: 'write',
+        tabla: 'auth',
+        id: 'pin',
+        data: JSON.stringify({ id: 'pin', pin: pinBuffer })
+      }).then(res => {
+        if (!res.ok) toast('PIN guardado localmente, pero falló el respaldo en Sheets', 'warning');
+      }).catch(() => {
+        toast('PIN guardado localmente, pero sin conexión para respaldar', 'warning');
+      });
+      document.getElementById('loginError').textContent = '';
+      pinMode = 'login';
+      showApp();
+    } else {
+      document.getElementById('loginError').textContent = 'Los PINs no coinciden';
+      for (let i = 0; i < 4; i++) {
+        const d = document.getElementById('dot' + i);
+        if (d) d.className = 'pin-dot error';
+      }
+      setTimeout(() => {
+        resetPinInput(false);
+        pinMode = 'set1';
+        pinFirst = '';
+        document.getElementById('loginSubtitle').textContent = 'Elegí un PIN de 4 dígitos';
+      }, 800);
+    }
+  }
+}
+
+function startSetPin() {
+  pinMode = 'set1';
+  pinFirst = '';
+  document.getElementById('loginSubtitle').textContent = 'Elegí un PIN de 4 dígitos';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginSetPinLink').style.display = 'none';
+  resetPinInput(false);
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+}
+
+// Teclado físico para PIN
+document.addEventListener('keydown', e => {
+  const loginVisible = document.getElementById('loginScreen').style.display !== 'none';
+  if (loginVisible) {
+    if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+    if (e.key === 'Backspace') pinDelete();
+    return;
+  }
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    closeDrawer();
+  }
+});
+
+// ============================================================
+// CACHE LOCAL (offline)
+// ============================================================
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) DB = { ...DB, ...JSON.parse(raw) };
+  } catch(e) {}
+}
+
+function saveCache() {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(DB));
+  } catch(e) {}
+}
+
+function updateOfflineBanner() {
+  const banner = document.getElementById('offlineBanner');
+  if (banner) banner.classList.toggle('visible', !isOnline);
+}
+
+
 
 // ============================================================
 // SHEETS API — JSONP (evita CORS de Google Apps Script)
@@ -1967,6 +2372,7 @@ async function readTabla(tabla) {
   const res = await sheetRequest({ action: 'read', tabla });
   if (res.ok) {
     DB[tabla] = res.data || [];
+    saveCache();
     return DB[tabla];
   }
   return DB[tabla] || [];
@@ -1980,6 +2386,7 @@ async function writeRow(tabla, id, obj) {
     const idx = DB[tabla].findIndex(r => r.id === id);
     if (idx >= 0) DB[tabla][idx] = obj;
     else DB[tabla].push(obj);
+    saveCache();
   }
   return res.ok;
 }
@@ -1988,6 +2395,7 @@ async function deleteRow(tabla, id) {
   const res = await sheetRequest({ action: 'delete', tabla, id });
   if (res.ok && DB[tabla]) {
     DB[tabla] = DB[tabla].filter(r => r.id !== id);
+    saveCache();
   }
   return res.ok;
 }
@@ -2000,13 +2408,18 @@ function genId() {
 // CONFIG & CONNECTION
 // ============================================================
 async function syncAll() {
+  if (!isOnline) {
+    updateStatusUI(false);
+    updateOfflineBanner();
+    loadPageData(currentPage);
+    return;
+  }
+
   updateStatusLoading();
 
-  // Detectar si se abre desde file:// (CORS bloqueado)
   if (window.location.protocol === 'file:') {
     updateStatusUI(false);
     showCorsWarning();
-    // Igual muestra la app con datos vacíos
     loadPageData(currentPage);
     return;
   }
@@ -2034,7 +2447,12 @@ async function syncAll() {
     toast('Sincronizado ✓', 'success');
   } catch(e) {
     updateStatusUI(false);
-    toast('No se pudo conectar con Google Sheets. Verificá la URL del Apps Script.', 'error');
+    // Usar caché si hay
+    if (Object.values(DB).some(v => Array.isArray(v) && v.length > 0)) {
+      toast('Sin conexión — mostrando datos guardados', 'warning');
+    } else {
+      toast('No se pudo conectar con Google Sheets', 'error');
+    }
     loadPageData(currentPage);
   }
 }
@@ -3604,14 +4022,6 @@ function toast(msg, type = 'success') {
   tc.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
-
-// ESC to close modals and drawer
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
-    closeDrawer();
-  }
-});
 
 // Swipe left to close drawer on mobile
 (function() {
