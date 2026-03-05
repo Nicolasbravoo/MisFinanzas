@@ -1276,6 +1276,9 @@
       <div class="nav-item" onclick="navigateTo('deudores')">
         <span class="icon">👥</span> Me deben
       </div>
+      <div class="nav-item" onclick="navigateTo('personas')">
+        <span class="icon">🧑‍🤝‍🧑</span> Personas
+      </div>
 
       <div class="nav-group-label">Ingresos</div>
       <div class="nav-item" onclick="navigateTo('sueldo')">
@@ -1513,6 +1516,25 @@
         </div>
       </div>
 
+      <!-- ======================== PERSONAS ======================== -->
+      <div class="page" id="page-personas">
+        <div class="page-header">
+          <div>
+            <h2>Personas</h2>
+            <p>Contactos, deudas y estado de cobros</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modalPersona')">+ Persona</button>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom:24px;" id="personasStats">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+
+        <div id="listaPersonas">
+          <div class="loading"><div class="spinner"></div> Cargando...</div>
+        </div>
+      </div>
+
       <!-- ======================== SUELDO ======================== -->
       <div class="page" id="page-sueldo">
         <div class="page-header">
@@ -1691,6 +1713,7 @@
     <div class="nav-item" onclick="navigateTo('prestamos');closeDrawer()"><span class="icon">🏦</span> Préstamos</div>
     <div class="nav-item" onclick="navigateTo('tarjetas');closeDrawer()"><span class="icon">💳</span> Tarjetas</div>
     <div class="nav-item" onclick="navigateTo('deudores');closeDrawer()"><span class="icon">👥</span> Me deben</div>
+    <div class="nav-item" onclick="navigateTo('personas');closeDrawer()"><span class="icon">🧑‍🤝‍🧑</span> Personas</div>
     <div class="nav-group-label">Ingresos</div>
     <div class="nav-item" onclick="navigateTo('sueldo');closeDrawer()"><span class="icon">💼</span> Ingresos fijos</div>
     <div class="nav-item" onclick="navigateTo('uber');closeDrawer()"><span class="icon">🚗</span> Uber / Auto</div>
@@ -1736,13 +1759,22 @@
     <div id="prestamo_compartido_fields" style="display:none;">
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Nombre del co-titular</label>
-          <input class="form-input" type="text" id="prestamo_cotitular" placeholder="Nombre" />
+          <label class="form-label">Co-titular / dueño</label>
+          <select class="form-select" id="prestamo_cotitular">
+            <option value="">— Seleccionar persona —</option>
+          </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="prestamo_pct_wrap">
           <label class="form-label">% que paga el otro</label>
           <input class="form-input" type="number" id="prestamo_pct_otro" placeholder="50" min="0" max="100" />
         </div>
+      </div>
+      <div class="form-group" id="prestamo_yo_pague_wrap">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="prestamo_yo_pague" style="width:16px;height:16px;accent-color:var(--accent);" />
+          <span>Yo ya pagué esta cuota al banco</span>
+        </label>
+        <div class="hint">Marcá esto cuando pagaste la cuota, aunque la otra persona no te haya devuelto todavía</div>
       </div>
     </div>
 
@@ -1874,7 +1906,9 @@
       </div>
       <div class="form-group" id="compra_persona_wrap">
         <label class="form-label">Persona</label>
-        <input class="form-input" type="text" id="compra_persona" placeholder="Nombre" />
+        <select class="form-select" id="compra_persona">
+          <option value="">— Seleccionar persona —</option>
+        </select>
       </div>
     </div>
 
@@ -2073,6 +2107,70 @@
   </div>
 </div>
 
+<!-- MODAL PERSONA -->
+<div class="modal-overlay" id="modalPersona">
+  <div class="modal" style="max-width:440px;">
+    <button class="modal-close" onclick="closeModal('modalPersona')">✕</button>
+    <div class="modal-title">🧑‍🤝‍🧑 <span id="modalPersonaTitulo">Nueva Persona</span></div>
+
+    <input type="hidden" id="persona_edit_id" />
+
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" type="text" id="persona_nombre" placeholder="Ej: Melisa, Mica..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Teléfono (opcional)</label>
+      <input class="form-input" type="text" id="persona_telefono" placeholder="Ej: +54 9 11..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <input class="form-input" type="text" id="persona_notas" placeholder="Opcional" />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalPersona')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPersona()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGISTRAR PAGO RECIBIDO -->
+<div class="modal-overlay" id="modalPagoRecibido">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeModal('modalPagoRecibido')">✕</button>
+    <div class="modal-title">💰 Registrar pago recibido</div>
+
+    <input type="hidden" id="pago_persona_id" />
+    <input type="hidden" id="pago_deuda_id" />
+
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;" id="pagoDeudaInfo"></div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monto recibido</label>
+        <div class="sueldo-input-wrap">
+          <span class="sueldo-prefix">$</span>
+          <input class="form-input sueldo-input" type="number" id="pago_monto" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input class="form-input" type="date" id="pago_fecha" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <input class="form-input" type="text" id="pago_notas" placeholder="Ej: Transferencia, efectivo..." />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalPagoRecibido')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPagoRecibido()">✓ Registrar pago</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -2098,6 +2196,8 @@ let DB = {
   gastosFijos: [],
   uber: [],
   ingresosFijos: [],
+  personas: [],
+  pagosRecibidos: [],
   config: {}
 };
 
@@ -2434,6 +2534,8 @@ async function syncAll() {
     await readTabla('gastosFijos');
     await readTabla('uber');
     await readTabla('ingresosFijos');
+    await readTabla('personas');
+    await readTabla('pagosRecibidos');
     await readTabla('config');
 
     const configRow = (DB.config || []).find?.(r => r.id === 'main');
@@ -2444,6 +2546,7 @@ async function syncAll() {
 
     updateStatusUI(true);
     loadPageData(currentPage);
+    populatePersonaSelects();
     toast('Sincronizado ✓', 'success');
   } catch(e) {
     updateStatusUI(false);
@@ -2515,6 +2618,7 @@ const pageTitles = {
   prestamos: ['Préstamos', 'Gestión de todas tus deudas bancarias'],
   tarjetas: ['Tarjetas de crédito', 'Compras y cuotas'],
   deudores: ['Me deben', 'Resumen de lo que te deben'],
+  personas: ['Personas', 'Contactos y estado de cobros'],
   sueldo: ['Ingresos fijos & Auto', 'Sueldos, rentas y gastos del auto'],
   uber: ['Uber / Ingresos variables', 'Registro diario de ganancias'],
   analisis: ['Asesor Financiero', 'Análisis inteligente de tu situación'],
@@ -2570,6 +2674,7 @@ async function loadPageData(page) {
     case 'prestamos': await refreshPrestamos(); break;
     case 'tarjetas': await refreshTarjetas(); break;
     case 'deudores': await refreshDeudores(); break;
+    case 'personas': await refreshPersonas(); break;
     case 'sueldo': await refreshSueldo(); break;
     case 'uber': await refreshUber(); break;
   }
@@ -2918,6 +3023,12 @@ function calcUberAcumulado() {
   return calcUberMes();
 }
 
+function getPersonaNombre(idOrNombre) {
+  // Puede ser un ID (nuevo) o un nombre directo (legacy)
+  const p = (DB.personas || []).find(r => r.id === idOrNombre);
+  return p ? p.nombre : idOrNombre;
+}
+
 function calcDeudores() {
   const map = {};
 
@@ -2930,7 +3041,7 @@ function calcDeudores() {
     const pctOtro = parseInt(p.pct_otro) || 50;
     const cuotaTotal = parseFloat(p.cuota) / ((100 - pctOtro) / 100);
     const parteOtro = cuotaTotal * (pctOtro / 100);
-    const nombre = p.cotitular;
+    const nombre = getPersonaNombre(p.cotitular);
     if (!map[nombre]) map[nombre] = { nombre, total: 0, items: 0 };
     map[nombre].total += parteOtro;
     map[nombre].items++;
@@ -2947,12 +3058,12 @@ function calcDeudores() {
     if (c.tipo === 'compartida') {
       const pctYo = parseInt(c.pct_yo) || 50;
       const parteOtro = cuotaMensual * ((100 - pctYo) / 100);
-      const n = c.persona;
+      const n = getPersonaNombre(c.persona);
       if (!map[n]) map[n] = { nombre: n, total: 0, items: 0 };
       map[n].total += parteOtro;
       map[n].items++;
     } else if (c.tipo === 'ajena') {
-      const n = c.persona;
+      const n = getPersonaNombre(c.persona);
       if (!map[n]) map[n] = { nombre: n, total: 0, items: 0 };
       map[n].total += cuotaMensual;
       map[n].items++;
@@ -3034,7 +3145,10 @@ function togglePrestamoTipo() {
     tipo === 'compartido' ? 'block' : 'none';
 }
 
-function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function openModal(id) {
+  if (id === 'modalPrestamo' || id === 'modalCompra') populatePersonaSelects();
+  document.getElementById(id)?.classList.add('open');
+}
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
 async function guardarPrestamo() {
@@ -3052,6 +3166,7 @@ async function guardarPrestamo() {
     vencimiento: document.getElementById('prestamo_vencimiento').value,
     banco: document.getElementById('prestamo_banco').value,
     notas: document.getElementById('prestamo_notas').value,
+    yo_pague: document.getElementById('prestamo_yo_pague').checked,
   };
 
   if (!obj.nombre || !obj.cuota) { toast('Completá nombre y cuota', 'warning'); return; }
@@ -3068,12 +3183,14 @@ async function guardarPrestamo() {
 }
 
 function resetPrestamoForm() {
-  ['prestamo_edit_id','prestamo_nombre','prestamo_cotitular','prestamo_pct_otro','prestamo_total',
+  ['prestamo_edit_id','prestamo_nombre','prestamo_pct_otro','prestamo_total',
    'prestamo_cuota','prestamo_cuotas_total','prestamo_cuotas_pagadas','prestamo_vencimiento',
    'prestamo_banco','prestamo_notas'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  document.getElementById('prestamo_cotitular').value = '';
+  document.getElementById('prestamo_yo_pague').checked = false;
   document.getElementById('prestamo_tipo').value = 'mio';
   document.getElementById('prestamo_compartido_fields').style.display = 'none';
   document.getElementById('modalPrestamoTitulo').textContent = 'Nuevo Préstamo';
@@ -3082,6 +3199,7 @@ function resetPrestamoForm() {
 function editPrestamo(id) {
   const p = DB.prestamos.find(r => r.id === id);
   if (!p) return;
+  populatePersonaSelects();
   document.getElementById('prestamo_edit_id').value = p.id;
   document.getElementById('prestamo_nombre').value = p.nombre||'';
   document.getElementById('prestamo_tipo').value = p.tipo||'mio';
@@ -3094,6 +3212,7 @@ function editPrestamo(id) {
   document.getElementById('prestamo_vencimiento').value = p.vencimiento||'';
   document.getElementById('prestamo_banco').value = p.banco||'';
   document.getElementById('prestamo_notas').value = p.notas||'';
+  document.getElementById('prestamo_yo_pague').checked = p.yo_pague === true || p.yo_pague === 'true';
   togglePrestamoTipo();
   document.getElementById('modalPrestamoTitulo').textContent = 'Editar Préstamo';
   openModal('modalPrestamo');
@@ -3389,8 +3508,344 @@ async function refreshDeudores() {
 }
 
 // ============================================================
-// SUELDO
+// PERSONAS
 // ============================================================
+async function refreshPersonas() {
+  await readTabla('personas');
+  await readTabla('prestamos');
+  await readTabla('compras');
+  await readTabla('pagosRecibidos');
+  renderPersonasStats();
+  renderListaPersonas();
+}
+
+function renderPersonasStats() {
+  const personas = DB.personas || [];
+  const deudas = calcDeudasPorPersona();
+  const totalPendiente = Object.values(deudas).reduce((s,d) => s + d.pendiente, 0);
+  const totalCobrado = Object.values(deudas).reduce((s,d) => s + d.cobrado, 0);
+  const conDeuda = Object.values(deudas).filter(d => d.pendiente > 0).length;
+
+  document.getElementById('personasStats').innerHTML = `
+    <div class="card card-accent-yellow">
+      <div class="stat-label">Total pendiente de cobro</div>
+      <div class="stat-value yellow">${fmt(totalPendiente)}</div>
+      <div class="stat-sub">${conDeuda} persona(s) con deuda</div>
+    </div>
+    <div class="card card-accent-green">
+      <div class="stat-label">Total cobrado</div>
+      <div class="stat-value green">${fmt(totalCobrado)}</div>
+      <div class="stat-sub">Pagos recibidos registrados</div>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="stat-label">Personas registradas</div>
+      <div class="stat-value blue">${personas.length}</div>
+      <div class="stat-sub">En tu lista de contactos</div>
+    </div>
+  `;
+}
+
+function calcDeudasPorPersona() {
+  const map = {};
+  const pagos = DB.pagosRecibidos || [];
+
+  // Inicializar con todas las personas
+  (DB.personas || []).forEach(p => {
+    map[p.id] = { personaId: p.id, nombre: p.nombre, items: [], cobrado: 0, pendiente: 0 };
+  });
+
+  // Calcular deuda total desde préstamos compartidos/ajenos
+  (DB.prestamos || []).forEach(p => {
+    if (!p || !p.cotitular) return;
+    const personaId = p.cotitular; // ahora es el ID de la persona
+    if (!map[personaId]) return;
+
+    const cuotasTotal = parseInt(p.cuotas_total) || 0;
+    const cuotasPagadas = parseInt(p.cuotas_pagadas) || 0;
+    const cuotasRestantes = Math.max(cuotasTotal - cuotasPagadas, 0);
+    const cuota = parseFloat(p.cuota) || 0;
+
+    let deudaMensual = 0;
+    if (p.tipo === 'compartido') {
+      const pctOtro = parseInt(p.pct_otro) || 50;
+      const cuotaTotal = cuota / ((100 - pctOtro) / 100);
+      deudaMensual = cuotaTotal * (pctOtro / 100);
+    } else if (p.tipo === 'ajeno') {
+      deudaMensual = cuota;
+    }
+
+    const deudaTotal = deudaMensual * cuotasRestantes;
+    if (deudaTotal <= 0) return;
+
+    // Cuánto se cobró de este item
+    const cobradoItem = pagos
+      .filter(pg => pg.deuda_id === p.id && pg.persona_id === personaId)
+      .reduce((s, pg) => s + (parseFloat(pg.monto) || 0), 0);
+
+    const pendienteItem = Math.max(deudaTotal - cobradoItem, 0);
+
+    map[personaId].items.push({
+      tipo: 'prestamo',
+      id: p.id,
+      desc: p.nombre,
+      banco: p.banco,
+      deudaTotal,
+      deudaMensual,
+      cobrado: cobradoItem,
+      pendiente: pendienteItem,
+      cuotasPagadas,
+      cuotasTotal,
+      yoPague: p.yo_pague === true || p.yo_pague === 'true',
+      vencimiento: p.vencimiento,
+    });
+    map[personaId].cobrado += cobradoItem;
+    map[personaId].pendiente += pendienteItem;
+  });
+
+  // Desde compras compartidas/ajenas
+  (DB.compras || []).forEach(c => {
+    if (!c || !c.persona) return;
+    const personaId = c.persona;
+    if (!map[personaId]) return;
+
+    const cuotas = parseInt(c.cuotas) || 1;
+    const pagadas = parseInt(c.cuotas_pagadas) || 0;
+    const restantes = Math.max(cuotas - pagadas, 0);
+    const cuotaM = parseFloat(c.total) / cuotas;
+
+    let parteOtro = 0;
+    if (c.tipo === 'compartida') {
+      parteOtro = cuotaM * ((100 - (parseInt(c.pct_yo) || 50)) / 100);
+    } else if (c.tipo === 'ajena') {
+      parteOtro = cuotaM;
+    }
+
+    const deudaTotal = parteOtro * restantes;
+    if (deudaTotal <= 0) return;
+
+    const cobradoItem = pagos
+      .filter(pg => pg.deuda_id === c.id && pg.persona_id === personaId)
+      .reduce((s, pg) => s + (parseFloat(pg.monto) || 0), 0);
+
+    const pendienteItem = Math.max(deudaTotal - cobradoItem, 0);
+
+    map[personaId].items.push({
+      tipo: 'compra',
+      id: c.id,
+      desc: c.desc,
+      deudaTotal,
+      deudaMensual: parteOtro,
+      cobrado: cobradoItem,
+      pendiente: pendienteItem,
+      cuotasPagadas: pagadas,
+      cuotasTotal: cuotas,
+    });
+    map[personaId].cobrado += cobradoItem;
+    map[personaId].pendiente += pendienteItem;
+  });
+
+  return map;
+}
+
+function renderListaPersonas() {
+  const personas = DB.personas || [];
+  const el = document.getElementById('listaPersonas');
+
+  if (!personas.length) {
+    el.innerHTML = `<div class="empty" style="padding:60px 0;">
+      <div class="empty-icon">🧑‍🤝‍🧑</div>
+      <p>No hay personas registradas.</p>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px;">Agregá personas para asignarlas a préstamos y compras, y llevar el seguimiento de cobros.</p>
+    </div>`;
+    return;
+  }
+
+  const deudas = calcDeudasPorPersona();
+
+  el.innerHTML = personas.map(p => {
+    const d = deudas[p.id] || { items: [], cobrado: 0, pendiente: 0 };
+    const pagos = (DB.pagosRecibidos || []).filter(pg => pg.persona_id === p.id)
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    const estadoColor = d.pendiente === 0 && d.items.length > 0 ? 'var(--accent)' : d.pendiente > 0 ? 'var(--accent3)' : 'var(--text3)';
+    const estadoLabel = d.pendiente === 0 && d.items.length > 0 ? '✓ Al día' : d.pendiente > 0 ? `Debe ${fmt(d.pendiente)}` : 'Sin deuda';
+
+    return `<div class="card" style="margin-bottom:16px;">
+      <!-- Cabecera persona -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;">
+            ${p.nombre.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:800;">${p.nombre}</div>
+            ${p.telefono ? `<div class="hint">📱 ${p.telefono}</div>` : ''}
+            ${p.notas ? `<div class="hint" style="color:var(--text3);">${p.notas}</div>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:${estadoColor};">${estadoLabel}</span>
+          <button class="btn btn-ghost btn-sm" onclick="editPersona('${p.id}')">✎</button>
+          <button class="btn btn-ghost btn-sm" onclick="deletePersona('${p.id}')">✕</button>
+        </div>
+      </div>
+
+      <!-- Items de deuda -->
+      ${d.items.length ? `
+      <div style="margin-bottom:12px;">
+        <div class="section-title" style="margin-bottom:8px;">Detalle de deudas</div>
+        ${d.items.map(item => {
+          const pctCobrado = item.deudaTotal > 0 ? Math.min((item.cobrado / item.deudaTotal) * 100, 100) : 100;
+          const colorItem = item.pendiente === 0 ? 'var(--accent)' : item.cobrado > 0 ? 'var(--accent3)' : 'var(--accent2)';
+          return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:13px;font-weight:700;">${item.tipo === 'prestamo' ? '🏦' : '💳'} ${item.desc}</div>
+                <div class="hint">Cuota ${item.deudaMensual>0?fmt(item.deudaMensual)+'/mes':''} · ${item.cuotasPagadas}/${item.cuotasTotal} cuotas</div>
+                ${item.yoPague !== undefined ? `<div class="hint" style="color:${item.yoPague?'var(--accent)':'var(--accent2)'};">${item.yoPague?'✓ Yo pagué la cuota':'✗ No pagué la cuota aún'}</div>` : ''}
+              </div>
+              <div style="text-align:right;">
+                <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${colorItem};">${fmt(item.pendiente)} pendiente</div>
+                <div class="hint">de ${fmt(item.deudaTotal)} total · cobrado ${fmt(item.cobrado)}</div>
+              </div>
+            </div>
+            <div class="progress-bar" style="height:6px;margin-bottom:8px;">
+              <div class="progress-fill" style="width:${pctCobrado}%;background:${colorItem};"></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="abrirModalPago('${p.id}','${item.id}','${item.desc}',${item.pendiente})" style="width:100%;justify-content:center;" ${item.pendiente<=0?'disabled style="opacity:0.4;cursor:not-allowed;"':''}>
+              + Registrar pago recibido
+            </button>
+          </div>`;
+        }).join('')}
+      </div>` : `<div class="hint" style="padding:8px 0;color:var(--text3);">Sin deudas asignadas. Los préstamos y compras que le asignés aparecerán acá.</div>`}
+
+      <!-- Historial de pagos -->
+      ${pagos.length ? `
+      <div>
+        <div class="section-title" style="margin-bottom:8px;">Historial de pagos recibidos</div>
+        <div style="max-height:160px;overflow-y:auto;">
+          ${pagos.map(pg => {
+            const fechaFmt = new Date(pg.fecha + 'T00:00:00').toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'2-digit'});
+            // Buscar nombre del item al que aplica
+            const itemRef = d.items.find(i => i.id === pg.deuda_id);
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(42,42,58,0.5);gap:8px;">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--accent);">+${fmt(pg.monto)}</div>
+                <div class="hint">${fechaFmt}${itemRef ? ' · ' + itemRef.desc : ''}${pg.notas ? ' · ' + pg.notas : ''}</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="font-size:9px;padding:3px 6px;" onclick="deletePagoRecibido('${pg.id}')">✕</button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// --- CRUD PERSONAS ---
+async function guardarPersona() {
+  const id = document.getElementById('persona_edit_id').value || genId();
+  const obj = {
+    id,
+    nombre: document.getElementById('persona_nombre').value.trim(),
+    telefono: document.getElementById('persona_telefono').value.trim(),
+    notas: document.getElementById('persona_notas').value.trim(),
+  };
+  if (!obj.nombre) { toast('Ingresá un nombre', 'warning'); return; }
+  await writeRow('personas', id, obj);
+  toast('Persona guardada ✓', 'success');
+  closeModal('modalPersona');
+  resetModalPersona();
+  await refreshPersonas();
+  populatePersonaSelects(); // actualizar selectores en modales
+}
+
+function resetModalPersona() {
+  document.getElementById('persona_edit_id').value = '';
+  document.getElementById('persona_nombre').value = '';
+  document.getElementById('persona_telefono').value = '';
+  document.getElementById('persona_notas').value = '';
+  document.getElementById('modalPersonaTitulo').textContent = 'Nueva Persona';
+}
+
+function editPersona(id) {
+  const p = (DB.personas || []).find(r => r.id === id);
+  if (!p) return;
+  document.getElementById('persona_edit_id').value = p.id;
+  document.getElementById('persona_nombre').value = p.nombre || '';
+  document.getElementById('persona_telefono').value = p.telefono || '';
+  document.getElementById('persona_notas').value = p.notas || '';
+  document.getElementById('modalPersonaTitulo').textContent = 'Editar Persona';
+  openModal('modalPersona');
+}
+
+async function deletePersona(id) {
+  if (!confirm('¿Eliminar esta persona? Se eliminará también su historial de pagos.')) return;
+  await deleteRow('personas', id);
+  // Eliminar pagos de esta persona
+  const pagos = (DB.pagosRecibidos || []).filter(p => p.persona_id === id);
+  for (const pg of pagos) await deleteRow('pagosRecibidos', pg.id);
+  toast('Eliminado ✓', 'success');
+  await refreshPersonas();
+}
+
+// --- PAGO RECIBIDO ---
+function abrirModalPago(personaId, deudaId, desc, pendiente) {
+  document.getElementById('pago_persona_id').value = personaId;
+  document.getElementById('pago_deuda_id').value = deudaId;
+  document.getElementById('pago_fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pago_monto').value = '';
+  document.getElementById('pago_notas').value = '';
+  const persona = (DB.personas || []).find(p => p.id === personaId);
+  document.getElementById('pagoDeudaInfo').innerHTML = `
+    <div style="font-size:13px;font-weight:700;">${persona ? persona.nombre : ''}</div>
+    <div class="hint">Deuda: ${desc}</div>
+    <div style="font-family:var(--mono);color:var(--accent3);font-size:13px;margin-top:4px;">Pendiente: ${fmt(pendiente)}</div>
+  `;
+  openModal('modalPagoRecibido');
+}
+
+async function guardarPagoRecibido() {
+  const id = genId();
+  const obj = {
+    id,
+    persona_id: document.getElementById('pago_persona_id').value,
+    deuda_id: document.getElementById('pago_deuda_id').value,
+    monto: document.getElementById('pago_monto').value,
+    fecha: document.getElementById('pago_fecha').value,
+    notas: document.getElementById('pago_notas').value,
+  };
+  if (!obj.monto || !obj.fecha) { toast('Completá monto y fecha', 'warning'); return; }
+  await writeRow('pagosRecibidos', id, obj);
+  toast('Pago registrado ✓', 'success');
+  closeModal('modalPagoRecibido');
+  await refreshPersonas();
+}
+
+async function deletePagoRecibido(id) {
+  if (!confirm('¿Eliminar este pago?')) return;
+  await deleteRow('pagosRecibidos', id);
+  toast('Eliminado ✓', 'success');
+  await refreshPersonas();
+}
+
+// --- POPULATE SELECTS ---
+function populatePersonaSelects() {
+  const personas = DB.personas || [];
+  const opts = '<option value="">— Seleccionar persona —</option>' +
+    personas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+
+  const selects = ['prestamo_cotitular', 'compra_persona'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const current = el.value;
+    el.innerHTML = opts;
+    el.value = current; // mantener selección si ya había
+  });
+}
+
+
 async function refreshSueldo() {
   await readTabla('ingresosFijos');
   await readTabla('gastosFijos');
