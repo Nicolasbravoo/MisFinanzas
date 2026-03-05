@@ -1202,9 +1202,45 @@
     .offline-banner { bottom: 80px; }
   }
 
+  /* GLOBAL LOADING OVERLAY */
+  .global-loader {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.7);
+    z-index: 8000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    backdrop-filter: blur(3px);
+  }
+  .global-loader.visible { display: flex; }
+  .global-loader-spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .global-loader-text {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
 </style>
 </head>
 <body>
+
+<!-- GLOBAL LOADER -->
+<div class="global-loader" id="globalLoader">
+  <div class="global-loader-spinner"></div>
+  <div class="global-loader-text" id="globalLoaderText">Cargando...</div>
+</div>
 
 <!-- LOGIN SCREEN -->
 <div class="login-screen" id="loginScreen">
@@ -2178,7 +2214,7 @@
 // ============================================================
 // STATE & CONFIG — PRODUCCIÓN
 // ============================================================
-const SHEET_URL   = 'https://script.google.com/macros/s/AKfycby-AXByfriM0A8EXCxQ-820qXpiDDGS4mudNbOWNx_w7T6cxhNxWkIE7PR_yE2x8HHf/exec';
+const SHEET_URL   = 'https://script.google.com/macros/s/AKfycbzGtSKQWk1GAsHgK2_v-HXHfPZd2XIzmw8FixsJBU_uSnkYcjsQwngXgR0QHJPUIjAR/exec';
 const PIN_KEY     = 'fc_pin';
 const CACHE_KEY   = 'fc_db_cache';
 
@@ -2235,8 +2271,10 @@ async function showLogin() {
   resetPinInput(false);
 
   // Intentar bajar PIN del Sheet (fuente de verdad)
+  showLoader('Verificando acceso...');
   try {
     const res = await sheetRequest({ action: 'read', tabla: 'auth' });
+    hideLoader();
     const row = (res.data || []).find(r => r.id === 'pin');
     if (row && row.pin) {
       // PIN existe en Sheet → guardarlo en localStorage como caché
@@ -2250,6 +2288,7 @@ async function showLogin() {
       startSetPin();
     }
   } catch(e) {
+    hideLoader();
     // Sin conexión → usar localStorage como fallback
     const local = localStorage.getItem(PIN_KEY);
     if (local) {
@@ -2258,7 +2297,6 @@ async function showLogin() {
       resetPinInput(false);
       pinMode = 'login';
     } else {
-      // Sin conexión y sin PIN local → no se puede validar
       document.getElementById('loginSubtitle').textContent = 'Sin conexión';
       document.getElementById('loginError').textContent = 'Necesitás conexión para el primer ingreso';
     }
@@ -2427,12 +2465,29 @@ function updateOfflineBanner() {
 // ============================================================
 // SHEETS API — JSONP (evita CORS de Google Apps Script)
 // ============================================================
+
+let _loaderCount = 0;
+
+function showLoader(text) {
+  _loaderCount++;
+  const el = document.getElementById('globalLoader');
+  const txt = document.getElementById('globalLoaderText');
+  if (el) el.classList.add('visible');
+  if (txt && text) txt.textContent = text;
+}
+
+function hideLoader() {
+  _loaderCount = Math.max(0, _loaderCount - 1);
+  if (_loaderCount === 0) {
+    const el = document.getElementById('globalLoader');
+    if (el) el.classList.remove('visible');
+  }
+}
+
 function sheetRequest(params) {
   return new Promise((resolve) => {
-    // Nombre único para el callback
     const cbName = 'fc_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
 
-    // Timeout de 12 segundos
     const timeout = setTimeout(() => {
       cleanup();
       resolve({ ok: false, error: 'Timeout — sin respuesta del servidor' });
@@ -2445,18 +2500,15 @@ function sheetRequest(params) {
       if (el) el.remove();
     }
 
-    // Registrar callback global
     window[cbName] = function(data) {
       cleanup();
       resolve(data);
     };
 
-    // Construir URL con callback
     const url = new URL(SHEET_URL);
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
     url.searchParams.set('callback', cbName);
 
-    // Inyectar script tag
     const script = document.createElement('script');
     script.id = cbName;
     script.src = url.toString();
@@ -2469,41 +2521,54 @@ function sheetRequest(params) {
 }
 
 async function readTabla(tabla) {
-  const res = await sheetRequest({ action: 'read', tabla });
-  if (res.ok) {
-    DB[tabla] = res.data || [];
-    saveCache();
-    return DB[tabla];
+  showLoader('Cargando ' + tabla + '...');
+  try {
+    const res = await sheetRequest({ action: 'read', tabla });
+    if (res.ok) {
+      DB[tabla] = res.data || [];
+      saveCache();
+    }
+    return DB[tabla] || [];
+  } finally {
+    hideLoader();
   }
-  return DB[tabla] || [];
 }
 
 async function writeRow(tabla, id, obj) {
   obj.id = id;
-  const res = await sheetRequest({ action: 'write', tabla, id, data: JSON.stringify(obj) });
-  if (res.ok) {
-    if (!DB[tabla]) DB[tabla] = [];
-    const idx = DB[tabla].findIndex(r => r.id === id);
-    if (idx >= 0) DB[tabla][idx] = obj;
-    else DB[tabla].push(obj);
-    saveCache();
+  showLoader('Guardando...');
+  try {
+    const res = await sheetRequest({ action: 'write', tabla, id, data: JSON.stringify(obj) });
+    if (res.ok) {
+      if (!DB[tabla]) DB[tabla] = [];
+      const idx = DB[tabla].findIndex(r => r.id === id);
+      if (idx >= 0) DB[tabla][idx] = obj;
+      else DB[tabla].push(obj);
+      saveCache();
+    }
+    return res.ok;
+  } finally {
+    hideLoader();
   }
-  return res.ok;
 }
 
 async function deleteRow(tabla, id) {
-  const res = await sheetRequest({ action: 'delete', tabla, id });
-  if (res.ok && DB[tabla]) {
-    DB[tabla] = DB[tabla].filter(r => r.id !== id);
-    saveCache();
+  showLoader('Eliminando...');
+  try {
+    const res = await sheetRequest({ action: 'delete', tabla, id });
+    if (res.ok && DB[tabla]) {
+      DB[tabla] = DB[tabla].filter(r => r.id !== id);
+      saveCache();
+    }
+    return res.ok;
+  } finally {
+    hideLoader();
   }
-  return res.ok;
 }
 
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 }
-
 // ============================================================
 // CONFIG & CONNECTION
 // ============================================================
@@ -2516,8 +2581,10 @@ async function syncAll() {
   }
 
   updateStatusLoading();
+  showLoader('Conectando con Google Sheets...');
 
   if (window.location.protocol === 'file:') {
+    hideLoader();
     updateStatusUI(false);
     showCorsWarning();
     loadPageData(currentPage);
@@ -2528,15 +2595,19 @@ async function syncAll() {
     const ping = await sheetRequest({ action: 'ping' });
     if (!ping.ok) throw new Error(ping.error || 'Sin respuesta del servidor');
 
-    await readTabla('prestamos');
-    await readTabla('tarjetas');
-    await readTabla('compras');
-    await readTabla('gastosFijos');
-    await readTabla('uber');
-    await readTabla('ingresosFijos');
-    await readTabla('personas');
-    await readTabla('pagosRecibidos');
-    await readTabla('config');
+    // Cargar todas las tablas en paralelo → más rápido con hojas separadas
+    showLoader('Cargando datos...');
+    await Promise.all([
+      readTabla('prestamos'),
+      readTabla('tarjetas'),
+      readTabla('compras'),
+      readTabla('gastosFijos'),
+      readTabla('uber'),
+      readTabla('ingresosFijos'),
+      readTabla('personas'),
+      readTabla('pagosRecibidos'),
+      readTabla('config'),
+    ]);
 
     const configRow = (DB.config || []).find?.(r => r.id === 'main');
     if (configRow) {
@@ -2545,18 +2616,19 @@ async function syncAll() {
     }
 
     updateStatusUI(true);
-    loadPageData(currentPage);
     populatePersonaSelects();
+    loadPageData(currentPage);
     toast('Sincronizado ✓', 'success');
   } catch(e) {
     updateStatusUI(false);
-    // Usar caché si hay
     if (Object.values(DB).some(v => Array.isArray(v) && v.length > 0)) {
       toast('Sin conexión — mostrando datos guardados', 'warning');
     } else {
       toast('No se pudo conectar con Google Sheets', 'error');
     }
     loadPageData(currentPage);
+  } finally {
+    hideLoader();
   }
 }
 
@@ -3141,8 +3213,14 @@ function renderPrestamosTabla(list, elId, parentId) {
 
 function togglePrestamoTipo() {
   const tipo = document.getElementById('prestamo_tipo').value;
-  document.getElementById('prestamo_compartido_fields').style.display =
-    tipo === 'compartido' ? 'block' : 'none';
+  const showFields = tipo === 'compartido' || tipo === 'ajeno';
+  document.getElementById('prestamo_compartido_fields').style.display = showFields ? 'block' : 'none';
+  // El % solo aplica cuando es compartido
+  const pctWrap = document.getElementById('prestamo_pct_wrap');
+  if (pctWrap) pctWrap.style.display = tipo === 'compartido' ? 'block' : 'none';
+  // El checkbox "yo pagué" aplica en ambos
+  const yoPagueWrap = document.getElementById('prestamo_yo_pague_wrap');
+  if (yoPagueWrap) yoPagueWrap.style.display = showFields ? 'block' : 'none';
 }
 
 function openModal(id) {
