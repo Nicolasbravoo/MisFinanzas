@@ -2678,7 +2678,9 @@ async function syncAll() {
     const el = document.getElementById('globalLoader');
     if (el) el.classList.remove('visible');
   }
-} {
+}
+
+function showCorsWarning() {
   // Mostrar banner solo si no existe ya
   if (document.getElementById('corsWarning')) return;
   const banner = document.createElement('div');
